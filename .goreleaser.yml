@@ -66,3 +66,18 @@ release:
   prerelease: auto
   mode: replace
   name_template: "v{{.Version}}"
+
+brews:
+  - name: bb
+    repository:
+      owner: rbansal42
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    folder: Formula
+    homepage: "https://github.com/rbansal42/bb"
+    description: "Unofficial CLI for Bitbucket Cloud"
+    license: "MIT"
+    install: |
+      bin.install "bb"
+    test: |
+      system "#{bin}/bb", "version"
