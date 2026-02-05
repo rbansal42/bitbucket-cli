@@ -15,6 +15,7 @@ import (
 	"github.com/rbansal42/bb/internal/cmd/pr"
 	"github.com/rbansal42/bb/internal/cmd/project"
 	"github.com/rbansal42/bb/internal/cmd/repo"
+	"github.com/rbansal42/bb/internal/cmd/snippet"
 	"github.com/rbansal42/bb/internal/cmd/workspace"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
@@ -85,6 +86,7 @@ func init() {
 	rootCmd.AddCommand(pr.NewCmdPR(GetStreams()))
 	rootCmd.AddCommand(project.NewCmdProject(GetStreams()))
 	rootCmd.AddCommand(repo.NewCmdRepo(GetStreams()))
+	rootCmd.AddCommand(snippet.NewCmdSnippet(GetStreams()))
 	rootCmd.AddCommand(workspace.NewCmdWorkspace(GetStreams()))
 }
 
