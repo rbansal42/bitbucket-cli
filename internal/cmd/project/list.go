@@ -51,7 +51,7 @@ This command shows projects you have access to in the specified workspace.`,
 	}
 
 	cmd.Flags().StringVarP(&opts.Workspace, "workspace", "w", "", "Workspace slug (required)")
-	cmd.Flags().IntVar(&opts.Limit, "limit", 30, "Maximum number of projects to list")
+	cmd.Flags().IntVarP(&opts.Limit, "limit", "l", 30, "Maximum number of projects to list")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 
 	return cmd

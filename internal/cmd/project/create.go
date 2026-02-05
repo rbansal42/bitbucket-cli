@@ -56,7 +56,7 @@ identifier (e.g., "PROJ", "DEV", "CORE").`,
 				return fmt.Errorf("project name is required. Use --name or -n to specify")
 			}
 
-			return runCreate(opts)
+			return runCreate(cmd.Context(), opts)
 		},
 	}
 
@@ -70,14 +70,14 @@ identifier (e.g., "PROJ", "DEV", "CORE").`,
 	return cmd
 }
 
-func runCreate(opts *createOptions) error {
+func runCreate(ctx context.Context, opts *createOptions) error {
 	// Get authenticated client
 	client, err := getAPIClient()
 	if err != nil {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	// Build create options

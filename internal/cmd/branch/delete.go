@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -73,7 +72,7 @@ func runDelete(ctx context.Context, opts *DeleteOptions) error {
 
 		fmt.Fprintf(opts.Streams.Out, "Delete branch %s from %s/%s? [y/N]: ", opts.BranchName, workspace, repoSlug)
 
-		reader := bufio.NewReader(os.Stdin)
+		reader := bufio.NewReader(opts.Streams.In)
 		response, err := reader.ReadString('\n')
 		if err != nil {
 			return fmt.Errorf("failed to read response: %w", err)

@@ -50,7 +50,7 @@ short uppercase identifiers like "PROJ" or "DEV".`,
 				return fmt.Errorf("workspace is required. Use --workspace or -w to specify")
 			}
 
-			return runView(opts)
+			return runView(cmd.Context(), opts)
 		},
 	}
 
@@ -61,14 +61,14 @@ short uppercase identifiers like "PROJ" or "DEV".`,
 	return cmd
 }
 
-func runView(opts *viewOptions) error {
+func runView(ctx context.Context, opts *viewOptions) error {
 	// Get authenticated client
 	client, err := getAPIClient()
 	if err != nil {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	// Fetch project details
