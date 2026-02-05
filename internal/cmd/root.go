@@ -1,0 +1,76 @@
+package cmd
+
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+
+	"github.com/rbansal42/bb/internal/iostreams"
+)
+
+var (
+	// Version is set at build time
+	Version = "dev"
+
+	// BuildDate is set at build time
+	BuildDate = "unknown"
+)
+
+// rootCmd represents the base command when called without any subcommands
+var rootCmd = &cobra.Command{
+	Use:   "bb",
+	Short: "Bitbucket CLI - Work seamlessly with Bitbucket from the command line",
+	Long: `bb is an unofficial command-line interface for Bitbucket Cloud.
+
+It provides commands for working with pull requests, repositories,
+issues, pipelines, and more - all from your terminal.
+
+To get started, authenticate with Bitbucket:
+  bb auth login
+
+Then you can start using commands like:
+  bb pr list
+  bb repo clone workspace/repo
+  bb issue create`,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+// streams is the global IOStreams instance
+var streams *iostreams.IOStreams
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+func Execute() error {
+	streams = iostreams.New()
+
+	err := rootCmd.Execute()
+	if err != nil {
+		streams.Error("%s", err)
+	}
+	return err
+}
+
+func init() {
+	// Global flags
+	rootCmd.PersistentFlags().StringP("repo", "R", "", "Select a repository using the WORKSPACE/REPO format")
+
+	// Version command
+	rootCmd.AddCommand(&cobra.Command{
+		Use:   "version",
+		Short: "Print the version number of bb",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("bb version %s (%s)\n", Version, BuildDate)
+		},
+	})
+
+	// Add subcommands
+	// Commands will be added as they are implemented
+}
+
+// GetStreams returns the global IOStreams instance
+func GetStreams() *iostreams.IOStreams {
+	if streams == nil {
+		streams = iostreams.New()
+	}
+	return streams
+}
