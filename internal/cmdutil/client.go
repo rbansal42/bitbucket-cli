@@ -4,6 +4,7 @@ package cmdutil
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/rbansal42/bitbucket-cli/internal/api"
 	"github.com/rbansal42/bitbucket-cli/internal/config"
@@ -27,7 +28,17 @@ func GetAPIClient() (*api.Client, error) {
 		return nil, fmt.Errorf("failed to get token: %w", err)
 	}
 
-	// Try to parse as JSON (OAuth token) or use as plain token
+	// Check if this is Basic Auth credentials (prefixed with "basic:")
+	if strings.HasPrefix(tokenData, "basic:") {
+		credentials := strings.TrimPrefix(tokenData, "basic:")
+		parts := strings.SplitN(credentials, ":", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid stored credentials format")
+		}
+		return api.NewClient(api.WithBasicAuth(parts[0], parts[1])), nil
+	}
+
+	// Try to parse as JSON (OAuth token) or use as plain token (Bearer)
 	var tokenResp struct {
 		AccessToken string `json:"access_token"`
 	}
