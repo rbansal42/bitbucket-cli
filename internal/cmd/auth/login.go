@@ -52,15 +52,16 @@ func NewCmdLogin(streams *iostreams.IOStreams) *cobra.Command {
 		Short: "Authenticate with Bitbucket",
 		Long: `Authenticate with Bitbucket to enable API access.
 
-The default authentication mode is interactive and uses OAuth 2.0.
-This will open a browser window for you to authorize bb.
+This command will guide you through authentication setup interactively.
+You can choose between:
+  - API Token: Simple setup, good for CI/CD and automation
+  - OAuth: More secure, supports token refresh
 
-Alternatively, you can use --with-token to read a token from stdin.
-This is useful for automation or when using workspace/repository access tokens.`,
-		Example: `  # Interactive OAuth login
+Alternatively, use --with-token to read a token directly from stdin.`,
+		Example: `  # Interactive login (recommended)
   $ bb auth login
 
-  # Login with an access token
+  # Login with a token from stdin (for CI/CD)
   $ echo "your_token" | bb auth login --with-token
 
   # Login with a token from a file
@@ -78,14 +79,200 @@ This is useful for automation or when using workspace/repository access tokens.`
 }
 
 func runLogin(opts *loginOptions) error {
+	// If --with-token flag is set, read token from stdin
 	if opts.withToken {
-		return loginWithToken(opts)
+		return loginWithTokenFromStdin(opts)
 	}
-	return loginWithOAuth(opts)
+
+	// Interactive flow
+	return interactiveLogin(opts)
 }
 
-func loginWithToken(opts *loginOptions) error {
-	opts.streams.Info("Paste your access token:")
+func interactiveLogin(opts *loginOptions) error {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintln(opts.streams.Out, "Welcome to bb CLI! Let's get you authenticated with Bitbucket.")
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintln(opts.streams.Out, "How would you like to authenticate?")
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintln(opts.streams.Out, "  [1] API Token (simple, good for CI/CD)")
+	fmt.Fprintln(opts.streams.Out, "  [2] OAuth (more secure, supports token refresh)")
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprint(opts.streams.Out, "Enter choice [1/2]: ")
+
+	choice, err := reader.ReadString('\n')
+	if err != nil {
+		return fmt.Errorf("failed to read input: %w", err)
+	}
+	choice = strings.TrimSpace(choice)
+
+	switch choice {
+	case "1":
+		return interactiveAPITokenLogin(opts, reader)
+	case "2":
+		return interactiveOAuthLogin(opts, reader)
+	default:
+		return fmt.Errorf("invalid choice: %s (enter 1 or 2)", choice)
+	}
+}
+
+func interactiveAPITokenLogin(opts *loginOptions, reader *bufio.Reader) error {
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintln(opts.streams.Out, "=== API Token Authentication ===")
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintln(opts.streams.Out, "You'll need to create an API token in Bitbucket.")
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprint(opts.streams.Out, "Enter your workspace name (e.g., 'myteam'): ")
+
+	workspace, err := reader.ReadString('\n')
+	if err != nil {
+		return fmt.Errorf("failed to read input: %w", err)
+	}
+	workspace = strings.TrimSpace(workspace)
+
+	if workspace == "" {
+		return fmt.Errorf("workspace name is required")
+	}
+
+	// Construct the URL for creating API tokens
+	tokenURL := fmt.Sprintf("https://bitbucket.org/%s/workspace/settings/access-tokens", workspace)
+
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintln(opts.streams.Out, "To create an API token:")
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintf(opts.streams.Out, "  1. Opening: %s\n", tokenURL)
+	fmt.Fprintln(opts.streams.Out, "  2. Click 'Create access token'")
+	fmt.Fprintln(opts.streams.Out, "  3. Name it (e.g., 'bb-cli')")
+	fmt.Fprintln(opts.streams.Out, "  4. Select permissions:")
+	fmt.Fprintln(opts.streams.Out, "     - Account: Read")
+	fmt.Fprintln(opts.streams.Out, "     - Repositories: Read, Write")
+	fmt.Fprintln(opts.streams.Out, "     - Pull requests: Read, Write")
+	fmt.Fprintln(opts.streams.Out, "  5. Click 'Create' and copy the token")
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprint(opts.streams.Out, "Press Enter to open browser (or 'n' to skip): ")
+
+	skipBrowser, _ := reader.ReadString('\n')
+	skipBrowser = strings.TrimSpace(strings.ToLower(skipBrowser))
+
+	if skipBrowser != "n" && skipBrowser != "no" {
+		if err := browser.Open(tokenURL); err != nil {
+			opts.streams.Warning("Failed to open browser: %v", err)
+			fmt.Fprintf(opts.streams.Out, "Please open manually: %s\n", tokenURL)
+		}
+	}
+
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprint(opts.streams.Out, "Paste your API token: ")
+
+	token, err := reader.ReadString('\n')
+	if err != nil {
+		return fmt.Errorf("failed to read token: %w", err)
+	}
+	token = strings.TrimSpace(token)
+
+	if token == "" {
+		return fmt.Errorf("token cannot be empty")
+	}
+
+	// Validate and save the token
+	return validateAndSaveToken(opts, token)
+}
+
+func interactiveOAuthLogin(opts *loginOptions, reader *bufio.Reader) error {
+	// Check if OAuth credentials are already configured
+	clientID := os.Getenv("BB_OAUTH_CLIENT_ID")
+	clientSecret := os.Getenv("BB_OAUTH_CLIENT_SECRET")
+
+	if clientID != "" && clientSecret != "" {
+		// Credentials are set, proceed with OAuth flow
+		fmt.Fprintln(opts.streams.Out, "")
+		fmt.Fprintln(opts.streams.Out, "OAuth credentials found. Starting authentication...")
+		return performOAuthFlow(opts, clientID, clientSecret)
+	}
+
+	// Need to set up OAuth consumer first
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintln(opts.streams.Out, "=== OAuth Authentication Setup ===")
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintln(opts.streams.Out, "OAuth requires a one-time setup of an OAuth consumer in Bitbucket.")
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprint(opts.streams.Out, "Enter your workspace name (e.g., 'myteam'): ")
+
+	workspace, err := reader.ReadString('\n')
+	if err != nil {
+		return fmt.Errorf("failed to read input: %w", err)
+	}
+	workspace = strings.TrimSpace(workspace)
+
+	if workspace == "" {
+		return fmt.Errorf("workspace name is required")
+	}
+
+	// Construct the URL for creating OAuth consumers
+	oauthURL := fmt.Sprintf("https://bitbucket.org/%s/workspace/settings/oauth-consumers", workspace)
+
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintln(opts.streams.Out, "To create an OAuth consumer:")
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintf(opts.streams.Out, "  1. Opening: %s\n", oauthURL)
+	fmt.Fprintln(opts.streams.Out, "  2. Click 'Add consumer'")
+	fmt.Fprintln(opts.streams.Out, "  3. Fill in:")
+	fmt.Fprintln(opts.streams.Out, "     - Name: bb CLI")
+	fmt.Fprintln(opts.streams.Out, "     - Callback URL: http://localhost:8372/callback")
+	fmt.Fprintln(opts.streams.Out, "     - [x] This is a private consumer")
+	fmt.Fprintln(opts.streams.Out, "  4. Select permissions (Account, Repositories, Pull requests, etc.)")
+	fmt.Fprintln(opts.streams.Out, "  5. Click 'Save'")
+	fmt.Fprintln(opts.streams.Out, "  6. Copy the 'Key' and 'Secret'")
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprint(opts.streams.Out, "Press Enter to open browser (or 'n' to skip): ")
+
+	skipBrowser, _ := reader.ReadString('\n')
+	skipBrowser = strings.TrimSpace(strings.ToLower(skipBrowser))
+
+	if skipBrowser != "n" && skipBrowser != "no" {
+		if err := browser.Open(oauthURL); err != nil {
+			opts.streams.Warning("Failed to open browser: %v", err)
+			fmt.Fprintf(opts.streams.Out, "Please open manually: %s\n", oauthURL)
+		}
+	}
+
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprint(opts.streams.Out, "Paste your OAuth Key (Client ID): ")
+	clientID, err = reader.ReadString('\n')
+	if err != nil {
+		return fmt.Errorf("failed to read client ID: %w", err)
+	}
+	clientID = strings.TrimSpace(clientID)
+
+	if clientID == "" {
+		return fmt.Errorf("client ID cannot be empty")
+	}
+
+	fmt.Fprint(opts.streams.Out, "Paste your OAuth Secret (Client Secret): ")
+	clientSecret, err = reader.ReadString('\n')
+	if err != nil {
+		return fmt.Errorf("failed to read client secret: %w", err)
+	}
+	clientSecret = strings.TrimSpace(clientSecret)
+
+	if clientSecret == "" {
+		return fmt.Errorf("client secret cannot be empty")
+	}
+
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintln(opts.streams.Out, "To avoid entering these again, add to your shell profile (~/.zshrc or ~/.bashrc):")
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintf(opts.streams.Out, "  export BB_OAUTH_CLIENT_ID=\"%s\"\n", clientID)
+	fmt.Fprintf(opts.streams.Out, "  export BB_OAUTH_CLIENT_SECRET=\"%s\"\n", clientSecret)
+	fmt.Fprintln(opts.streams.Out, "")
+
+	// Proceed with OAuth flow
+	return performOAuthFlow(opts, clientID, clientSecret)
+}
+
+func loginWithTokenFromStdin(opts *loginOptions) error {
+	opts.streams.Info("Reading token from stdin...")
 
 	scanner := bufio.NewScanner(os.Stdin)
 	if !scanner.Scan() {
@@ -96,6 +283,12 @@ func loginWithToken(opts *loginOptions) error {
 	if token == "" {
 		return fmt.Errorf("empty token provided")
 	}
+
+	return validateAndSaveToken(opts, token)
+}
+
+func validateAndSaveToken(opts *loginOptions, token string) error {
+	opts.streams.Info("Validating token...")
 
 	// Validate token by making an API request
 	client := api.NewClient(api.WithToken(token))
@@ -128,35 +321,7 @@ func loginWithToken(opts *loginOptions) error {
 	return nil
 }
 
-func loginWithOAuth(opts *loginOptions) error {
-	// Check if OAuth client credentials are available
-	clientID := os.Getenv("BB_OAUTH_CLIENT_ID")
-	clientSecret := os.Getenv("BB_OAUTH_CLIENT_SECRET")
-
-	if clientID == "" || clientSecret == "" {
-		return fmt.Errorf(`OAuth client credentials not configured.
-
-To use OAuth authentication, you need to create an OAuth consumer in Bitbucket:
-
-1. Go to your Workspace settings > OAuth consumers
-   (https://bitbucket.org/YOUR_WORKSPACE/workspace/settings/oauth-consumers)
-   
-2. Click "Add consumer" and configure:
-   - Name: bb CLI
-   - Callback URL: http://localhost:8372/callback
-   - Permissions: Account (Read), Repositories (Read/Write), 
-     Pull requests (Read/Write), Pipelines (Read/Write), etc.
-   
-3. After creating, copy the Key and Secret, then set environment variables:
-   export BB_OAUTH_CLIENT_ID="your_key"
-   export BB_OAUTH_CLIENT_SECRET="your_secret"
-
-4. Run 'bb auth login' again
-
-Alternatively, use --with-token to authenticate with a Repository Access Token:
-  bb auth login --with-token`)
-	}
-
+func performOAuthFlow(opts *loginOptions, clientID, clientSecret string) error {
 	// Generate state for CSRF protection
 	state, err := generateState()
 	if err != nil {
@@ -184,8 +349,6 @@ Alternatively, use --with-token to authenticate with a Repository Access Token:
 	q.Set("response_type", "code")
 	q.Set("redirect_uri", callbackURL)
 	q.Set("state", state)
-	// Note: Bitbucket doesn't use scope parameter in the same way as GitHub
-	// Permissions are set in the OAuth consumer configuration
 	authURL.RawQuery = q.Encode()
 
 	// Channel to receive authorization code
@@ -290,8 +453,7 @@ Alternatively, use --with-token to authenticate with a Repository Access Token:
 		return fmt.Errorf("failed to get user info: %w", err)
 	}
 
-	// Store tokens in keyring
-	// We store both access and refresh tokens as JSON
+	// Store tokens in keyring (as JSON with refresh token)
 	tokenData, err := json.Marshal(tokenResp)
 	if err != nil {
 		return fmt.Errorf("failed to marshal token: %w", err)
