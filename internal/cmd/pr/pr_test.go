@@ -3,7 +3,7 @@ package pr
 import (
 	"testing"
 
-	"github.com/rbansal42/bb/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
 )
 
 func TestParsePRNumber(t *testing.T) {

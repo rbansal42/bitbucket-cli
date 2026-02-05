@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // parseIssueID parses an issue ID from args or returns an error

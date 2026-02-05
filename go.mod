@@ -1,4 +1,4 @@
-module github.com/rbansal42/bb
+module github.com/rbansal42/bitbucket-cli
 
 go 1.25.7
 

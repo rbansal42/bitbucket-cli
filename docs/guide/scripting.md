@@ -755,7 +755,7 @@ jobs:
       
       - name: Install bb CLI
         run: |
-          curl -sL https://github.com/rbansal42/bb/releases/latest/download/bb_linux_amd64.tar.gz | tar xz
+          curl -sL https://github.com/rbansal42/bitbucket-cli/releases/latest/download/bb_linux_amd64.tar.gz | tar xz
           sudo mv bb /usr/local/bin/
       
       - name: Create PR in Bitbucket
@@ -784,7 +784,7 @@ deploy:
   image: alpine:latest
   before_script:
     - apk add --no-cache curl jq
-    - curl -sL https://github.com/rbansal42/bb/releases/latest/download/bb_linux_amd64.tar.gz | tar xz
+    - curl -sL https://github.com/rbansal42/bitbucket-cli/releases/latest/download/bb_linux_amd64.tar.gz | tar xz
     - mv bb /usr/local/bin/
   script:
     - |
@@ -810,7 +810,7 @@ pipeline {
         stage('Setup') {
             steps {
                 sh '''
-                    curl -sL https://github.com/rbansal42/bb/releases/latest/download/bb_linux_amd64.tar.gz | tar xz
+                    curl -sL https://github.com/rbansal42/bitbucket-cli/releases/latest/download/bb_linux_amd64.tar.gz | tar xz
                     chmod +x bb
                 '''
             }
@@ -855,7 +855,7 @@ jobs:
       - run:
           name: Install bb CLI
           command: |
-            curl -sL https://github.com/rbansal42/bb/releases/latest/download/bb_linux_amd64.tar.gz | tar xz
+            curl -sL https://github.com/rbansal42/bitbucket-cli/releases/latest/download/bb_linux_amd64.tar.gz | tar xz
             sudo mv bb /usr/local/bin/
       - run:
           name: Sync to Bitbucket
@@ -886,7 +886,7 @@ variables:
 
 steps:
   - script: |
-      curl -sL https://github.com/rbansal42/bb/releases/latest/download/bb_linux_amd64.tar.gz | tar xz
+      curl -sL https://github.com/rbansal42/bitbucket-cli/releases/latest/download/bb_linux_amd64.tar.gz | tar xz
       sudo mv bb /usr/local/bin/
     displayName: 'Install bb CLI'
 
@@ -909,7 +909,7 @@ pipelines:
       - step:
           name: Create Release PR
           script:
-            - curl -sL https://github.com/rbansal42/bb/releases/latest/download/bb_linux_amd64.tar.gz | tar xz
+            - curl -sL https://github.com/rbansal42/bitbucket-cli/releases/latest/download/bb_linux_amd64.tar.gz | tar xz
             - chmod +x bb
             - |
               ./bb pr create \

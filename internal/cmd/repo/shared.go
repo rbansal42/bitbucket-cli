@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
 )
 
 // getCloneURL returns the appropriate clone URL based on protocol preference
