@@ -67,17 +67,18 @@ release:
   mode: replace
   name_template: "v{{.Version}}"
 
-brews:
-  - name: bb
-    repository:
-      owner: rbansal42
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    folder: Formula
-    homepage: "https://github.com/rbansal42/bitbucket-cli"
-    description: "Unofficial CLI for Bitbucket Cloud"
-    license: "MIT"
-    install: |
-      bin.install "bb"
-    test: |
-      system "#{bin}/bb", "version"
+# Homebrew tap - disabled until tap repository is set up
+# brews:
+#   - name: bb
+#     repository:
+#       owner: rbansal42
+#       name: homebrew-tap
+#       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+#     directory: Formula
+#     homepage: "https://github.com/rbansal42/bitbucket-cli"
+#     description: "Unofficial CLI for Bitbucket Cloud"
+#     license: "MIT"
+#     install: |
+#       bin.install "bb"
+#     test: |
+#       system "#{bin}/bb", "version"
