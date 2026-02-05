@@ -1,9 +1,12 @@
 package repo
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -88,6 +91,9 @@ func runSync(opts *syncOptions) error {
 	branch := detectDefaultBranch(getMainBranchName(repo), opts.branch)
 
 	// Build parent repository URL
+	if repo.Parent.Workspace == nil {
+		return fmt.Errorf("parent repository has no workspace information")
+	}
 	parentWorkspace := repo.Parent.Workspace.Slug
 	parentSlug := repo.Parent.Slug
 	parentFullName := fmt.Sprintf("%s/%s", parentWorkspace, parentSlug)
@@ -110,6 +116,18 @@ func runSync(opts *syncOptions) error {
 
 	// Merge or reset
 	if opts.force {
+		// Require confirmation for force reset (destructive operation)
+		if !opts.streams.IsStdinTTY() {
+			return fmt.Errorf("cannot confirm force sync: stdin is not a terminal\nForce sync requires interactive confirmation as it discards local changes")
+		}
+
+		opts.streams.Warning("This will discard ALL local changes on branch '%s'", branch)
+		fmt.Fprintf(opts.streams.Out, "Are you sure you want to force sync? [y/N] ")
+
+		if !confirmForceSync(opts.streams.In) {
+			return fmt.Errorf("force sync cancelled")
+		}
+
 		if err := resetToUpstream(upstreamRemote, branch); err != nil {
 			return fmt.Errorf("failed to reset to upstream: %w", err)
 		}
@@ -176,19 +194,64 @@ func ensureUpstreamRemote(remoteName, url string) error {
 // fetchUpstream fetches from the upstream remote
 func fetchUpstream(remote, refspec string) error {
 	cmd := exec.Command("git", "fetch", remote, refspec)
-	return cmd.Run()
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		if stderr.Len() > 0 {
+			return fmt.Errorf("%w: %s", err, stderr.String())
+		}
+		return err
+	}
+	return nil
 }
 
 // mergeUpstream merges changes from upstream
 func mergeUpstream(remote, branch string) error {
 	ref := fmt.Sprintf("%s/%s", remote, branch)
 	cmd := exec.Command("git", "merge", ref, "--ff-only")
-	return cmd.Run()
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		if stderr.Len() > 0 {
+			return fmt.Errorf("%w: %s", err, stderr.String())
+		}
+		return err
+	}
+	return nil
 }
 
 // resetToUpstream resets the current branch to upstream
 func resetToUpstream(remote, branch string) error {
 	ref := fmt.Sprintf("%s/%s", remote, branch)
 	cmd := exec.Command("git", "reset", "--hard", ref)
-	return cmd.Run()
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		if stderr.Len() > 0 {
+			return fmt.Errorf("%w: %s", err, stderr.String())
+		}
+		return err
+	}
+	return nil
+}
+
+// confirmForceSync prompts the user to confirm force sync operation
+func confirmForceSync(in interface{}) bool {
+	reader, ok := in.(*bufio.Reader)
+	if !ok {
+		// Try to create a reader from io.Reader
+		if r, ok := in.(interface{ Read([]byte) (int, error) }); ok {
+			reader = bufio.NewReader(r)
+		} else {
+			return false
+		}
+	}
+
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		return false
+	}
+
+	input = strings.TrimSpace(strings.ToLower(input))
+	return input == "y" || input == "yes"
 }

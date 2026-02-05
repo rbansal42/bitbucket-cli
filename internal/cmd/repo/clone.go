@@ -80,6 +80,9 @@ func runClone(opts *cloneOptions) error {
 		cloneURL = opts.repoArg
 		// Extract repo slug from URL for default directory name
 		destDir = extractRepoNameFromURL(opts.repoArg)
+		if destDir == "" {
+			return fmt.Errorf("could not determine repository name from URL: %s", opts.repoArg)
+		}
 	} else {
 		// Parse workspace/repo format
 		workspace, repoSlug, err := parseRepoArg(opts.repoArg)

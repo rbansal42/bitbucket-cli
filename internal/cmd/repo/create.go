@@ -71,8 +71,10 @@ a public repository instead.`,
 				opts.name = args[0]
 			}
 
-			// Handle conflicting flags
-			if opts.private && opts.public {
+			// Handle conflicting flags - only error if both were explicitly set
+			privateChanged := cmd.Flags().Changed("private")
+			publicChanged := cmd.Flags().Changed("public")
+			if privateChanged && publicChanged {
 				return fmt.Errorf("cannot specify both --private and --public")
 			}
 

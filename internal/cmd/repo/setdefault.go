@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -73,6 +74,11 @@ require a repository context.`,
 }
 
 func runSetDefault(ctx context.Context, opts *SetDefaultOptions) error {
+	// Check for mutually exclusive flags
+	if opts.View && opts.Unset {
+		return fmt.Errorf("cannot specify both --view and --unset")
+	}
+
 	// Handle --view flag
 	if opts.View {
 		return viewDefault(opts)
@@ -296,7 +302,13 @@ func removeLocalConfig() error {
 func confirmSetDefault(streams *iostreams.IOStreams, repo string) bool {
 	fmt.Fprintf(streams.Out, "Set default repository to %s? [Y/n] ", repo)
 
-	reader := bufio.NewReader(os.Stdin)
+	var reader *bufio.Reader
+	if r, ok := streams.In.(io.Reader); ok {
+		reader = bufio.NewReader(r)
+	} else {
+		reader = bufio.NewReader(os.Stdin)
+	}
+
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSpace(strings.ToLower(input))
 

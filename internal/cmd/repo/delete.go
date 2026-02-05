@@ -61,6 +61,11 @@ func runDelete(opts *deleteOptions) error {
 
 	// If not auto-confirmed, show warning and prompt
 	if !opts.yes {
+		// Require TTY for interactive confirmation
+		if !opts.streams.IsStdinTTY() {
+			return fmt.Errorf("cannot confirm deletion: stdin is not a terminal\nUse --yes flag to skip confirmation in non-interactive mode")
+		}
+
 		printDeleteWarning(opts.streams.ErrOut)
 
 		fmt.Fprintf(opts.streams.Out, "Type '%s' to confirm deletion: ", opts.repoSlug)

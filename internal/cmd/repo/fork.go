@@ -156,10 +156,12 @@ func runFork(opts *forkOptions) error {
 		opts.streams.Info("Adding fork as remote '%s'...", opts.remoteName)
 
 		if err := addRemote(opts.remoteName, cloneURL); err != nil {
-			return fmt.Errorf("failed to add remote: %w", err)
+			// Remote addition failure shouldn't fail the entire fork operation
+			opts.streams.Warning("Could not add remote '%s': %v", opts.remoteName, err)
+			opts.streams.Info("You can add the remote manually with: git remote add %s %s", opts.remoteName, cloneURL)
+		} else {
+			opts.streams.Success("Added remote '%s' pointing to %s", opts.remoteName, fork.FullName)
 		}
-
-		opts.streams.Success("Added remote '%s' pointing to %s", opts.remoteName, fork.FullName)
 	}
 
 	return nil
