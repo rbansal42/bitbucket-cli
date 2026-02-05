@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rbansal42/bb/internal/browser"
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/git"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
@@ -86,13 +87,13 @@ You can specify a pull request by number, URL, or branch name.`,
 func runView(opts *viewOptions) error {
 	// Resolve repository
 	var err error
-	opts.workspace, opts.repoSlug, err = parseRepository(opts.repo)
+	opts.workspace, opts.repoSlug, err = cmdutil.ParseRepository(opts.repo)
 	if err != nil {
 		return err
 	}
 
 	// Get authenticated client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
@@ -167,7 +168,7 @@ func extractPRNumberFromURL(urlStr string) (int, error) {
 
 // findPRForBranch finds an open PR for the given source branch
 func findPRForBranch(ctx context.Context, workspace, repoSlug, branch string) (int, error) {
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return 0, err
 	}

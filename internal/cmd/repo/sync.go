@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rbansal42/bb/internal/api"
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/git"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
@@ -69,7 +70,7 @@ func runSync(opts *syncOptions) error {
 	opts.repoSlug = remote.RepoSlug
 
 	// Get authenticated client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

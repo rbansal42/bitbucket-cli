@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -58,7 +59,7 @@ By default, this command detects the repository from your git remote.`,
 
 func runDelete(ctx context.Context, opts *DeleteOptions) error {
 	// Parse repository
-	workspace, repoSlug, err := parseRepository(opts.Repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.Repo)
 	if err != nil {
 		return err
 	}
@@ -85,7 +86,7 @@ func runDelete(ctx context.Context, opts *DeleteOptions) error {
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

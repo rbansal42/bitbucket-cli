@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -59,7 +60,7 @@ Use --force to skip the confirmation prompt.`,
 
 func runDelete(ctx context.Context, opts *DeleteOptions) error {
 	// Validate workspace
-	if err := parseWorkspace(opts.Workspace); err != nil {
+	if _, err := cmdutil.ParseWorkspace(opts.Workspace); err != nil {
 		return err
 	}
 
@@ -86,7 +87,7 @@ func runDelete(ctx context.Context, opts *DeleteOptions) error {
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

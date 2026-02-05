@@ -12,6 +12,7 @@ import (
 
 	"github.com/rbansal42/bb/internal/api"
 	"github.com/rbansal42/bb/internal/browser"
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -65,12 +66,12 @@ By default, shows snippet metadata. Use --raw to view file contents.`,
 
 func runView(ctx context.Context, opts *ViewOptions) error {
 	// Validate workspace
-	if err := parseWorkspace(opts.Workspace); err != nil {
+	if _, err := cmdutil.ParseWorkspace(opts.Workspace); err != nil {
 		return err
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

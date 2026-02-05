@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rbansal42/bb/internal/api"
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -70,13 +71,13 @@ by pipeline status (PENDING, IN_PROGRESS, COMPLETED, FAILED, etc.).`,
 
 func runList(ctx context.Context, opts *ListOptions) error {
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
 
 	// Parse repository
-	workspace, repoSlug, err := parseRepository(opts.Repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.Repo)
 	if err != nil {
 		return err
 	}

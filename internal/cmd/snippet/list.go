@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rbansal42/bb/internal/api"
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -70,7 +71,7 @@ var validRoles = map[string]bool{
 
 func runList(ctx context.Context, opts *ListOptions) error {
 	// Validate workspace
-	if err := parseWorkspace(opts.Workspace); err != nil {
+	if _, err := cmdutil.ParseWorkspace(opts.Workspace); err != nil {
 		return err
 	}
 
@@ -80,7 +81,7 @@ func runList(ctx context.Context, opts *ListOptions) error {
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
@@ -152,7 +153,7 @@ func outputListTable(streams *iostreams.IOStreams, snippets []api.Snippet) error
 	// Print rows
 	for _, snippet := range snippets {
 		id := fmt.Sprintf("%d", snippet.ID)
-		title := truncateString(snippet.Title, 40)
+		title := cmdutil.TruncateString(snippet.Title, 40)
 		if title == "" {
 			title = "(untitled)"
 		}
