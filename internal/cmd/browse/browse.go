@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rbansal42/bb/internal/config"
+	"github.com/rbansal42/bb/internal/git"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -100,7 +101,12 @@ Use flags to open specific sections like issues, pull requests, or settings.`,
 				path := args[0]
 				ref := branch
 				if ref == "" {
-					ref = "main"
+					// Try to detect current branch, fall back to "main"
+					if currentBranch, err := git.GetCurrentBranch(); err == nil {
+						ref = currentBranch
+					} else {
+						ref = "main"
+					}
 				}
 				url = fmt.Sprintf("%s/src/%s/%s", baseURL, ref, path)
 			case branch != "":
@@ -141,38 +147,14 @@ Use flags to open specific sections like issues, pull requests, or settings.`,
 }
 
 // detectRepository attempts to detect the repository from git remote
+// Uses the shared git package for URL parsing
 func detectRepository() (string, error) {
-	// Try to get remote URL from git
-	cmd := exec.Command("git", "remote", "get-url", "origin")
-	output, err := cmd.Output()
+	remote, err := git.GetDefaultRemote()
 	if err != nil {
-		return "", fmt.Errorf("not in a git repository or no origin remote")
+		return "", fmt.Errorf("not in a git repository or no Bitbucket remote found")
 	}
 
-	remoteURL := strings.TrimSpace(string(output))
-	return parseRemoteURL(remoteURL)
-}
-
-// parseRemoteURL extracts workspace/repo from a git remote URL
-func parseRemoteURL(url string) (string, error) {
-	// Handle SSH URLs: git@bitbucket.org:workspace/repo.git
-	if strings.HasPrefix(url, "git@bitbucket.org:") {
-		path := strings.TrimPrefix(url, "git@bitbucket.org:")
-		path = strings.TrimSuffix(path, ".git")
-		return path, nil
-	}
-
-	// Handle HTTPS URLs: https://bitbucket.org/workspace/repo.git
-	if strings.Contains(url, "bitbucket.org/") {
-		idx := strings.Index(url, "bitbucket.org/")
-		path := url[idx+len("bitbucket.org/"):]
-		path = strings.TrimSuffix(path, ".git")
-		// Remove any trailing slashes
-		path = strings.TrimSuffix(path, "/")
-		return path, nil
-	}
-
-	return "", fmt.Errorf("could not parse remote URL: %s", url)
+	return remote.Workspace + "/" + remote.RepoSlug, nil
 }
 
 // getBrowser returns the configured browser or empty string for system default
