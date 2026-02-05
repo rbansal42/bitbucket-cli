@@ -55,7 +55,7 @@ unless the --yes flag is provided.`,
 func runDelete(opts *deleteOptions) error {
 	// Parse the repository argument
 	var err error
-	opts.workspace, opts.repoSlug, err = parseRepoArg(opts.repoArg)
+	opts.workspace, opts.repoSlug, err = cmdutil.ParseRepository(opts.repoArg)
 	if err != nil {
 		return err
 	}
