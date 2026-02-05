@@ -3,8 +3,8 @@ package repo
 import (
 	"testing"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
 )
 
 func TestParseRepositoryFormat(t *testing.T) {

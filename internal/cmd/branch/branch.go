@@ -3,7 +3,7 @@ package branch
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // NewCmdBranch creates the branch command and its subcommands

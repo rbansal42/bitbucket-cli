@@ -2,8 +2,8 @@
 
 An unofficial command-line interface for Bitbucket Cloud, inspired by GitHub's `gh` CLI.
 
-[![CI](https://github.com/rbansal42/bb/actions/workflows/ci.yml/badge.svg)](https://github.com/rbansal42/bb/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/rbansal42/bb)](https://github.com/rbansal42/bb/releases)
+[![CI](https://github.com/rbansal42/bitbucket-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/rbansal42/bitbucket-cli/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/rbansal42/bitbucket-cli)](https://github.com/rbansal42/bitbucket-cli/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
@@ -28,7 +28,7 @@ brew install rbansal42/tap/bb
 
 ### Download Binary
 
-Download the latest release from the [releases page](https://github.com/rbansal42/bb/releases).
+Download the latest release from the [releases page](https://github.com/rbansal42/bitbucket-cli/releases).
 
 Available for:
 - macOS (Intel and Apple Silicon)
@@ -38,13 +38,13 @@ Available for:
 ### Build from Source
 
 ```bash
-go install github.com/rbansal42/bb/cmd/bb@latest
+go install github.com/rbansal42/bitbucket-cli/cmd/bb@latest
 ```
 
 Or clone and build:
 
 ```bash
-git clone https://github.com/rbansal42/bb.git
+git clone https://github.com/rbansal42/bitbucket-cli.git
 cd bb
 go build -o bb ./cmd/bb
 ```

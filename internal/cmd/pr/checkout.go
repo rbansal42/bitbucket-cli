@@ -10,9 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/cmdutil"
-	"github.com/rbansal42/bb/internal/git"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/git"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type checkoutOptions struct {

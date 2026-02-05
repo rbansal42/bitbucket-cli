@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
 )
 
 // parsePRNumber parses a PR number from args or returns an error

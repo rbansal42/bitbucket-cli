@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/rbansal42/bb/internal/cmd"
+	"github.com/rbansal42/bitbucket-cli/internal/cmd"
 )
 
 func main() {

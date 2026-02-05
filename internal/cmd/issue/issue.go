@@ -3,7 +3,7 @@ package issue
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // NewCmdIssue creates the issue command and its subcommands

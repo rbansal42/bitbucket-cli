@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	coreconfig "github.com/rbansal42/bb/internal/config"
-	"github.com/rbansal42/bb/internal/iostreams"
+	coreconfig "github.com/rbansal42/bitbucket-cli/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // NewCmdConfigGet creates the config get command

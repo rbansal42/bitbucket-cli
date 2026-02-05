@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rbansal42/bb/internal/git"
+	"github.com/rbansal42/bitbucket-cli/internal/git"
 )
 
 // ParseRepository parses a repository string in WORKSPACE/REPO format,
