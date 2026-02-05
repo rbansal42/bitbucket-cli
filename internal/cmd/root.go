@@ -9,6 +9,7 @@ import (
 	"github.com/rbansal42/bb/internal/cmd/auth"
 	"github.com/rbansal42/bb/internal/cmd/browse"
 	bbconfigcmd "github.com/rbansal42/bb/internal/cmd/config"
+	"github.com/rbansal42/bb/internal/cmd/pr"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -72,6 +73,7 @@ func init() {
 	rootCmd.AddCommand(api.NewCmdAPI(GetStreams()))
 	rootCmd.AddCommand(browse.NewCmdBrowse(GetStreams()))
 	rootCmd.AddCommand(bbconfigcmd.NewCmdConfig(GetStreams()))
+	rootCmd.AddCommand(pr.NewCmdPR(GetStreams()))
 }
 
 // GetStreams returns the global IOStreams instance
