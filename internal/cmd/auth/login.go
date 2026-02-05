@@ -162,21 +162,48 @@ func interactiveAPITokenLogin(opts *loginOptions, reader *bufio.Reader) error {
 		}
 	}
 
-	fmt.Fprintln(opts.streams.Out, "")
-	fmt.Fprint(opts.streams.Out, "Paste your API token: ")
+	// Token entry loop with retry on invalid token
+	for {
+		fmt.Fprintln(opts.streams.Out, "")
+		fmt.Fprint(opts.streams.Out, "Paste your API token: ")
 
-	token, err := reader.ReadString('\n')
-	if err != nil {
-		return fmt.Errorf("failed to read token: %w", err)
+		token, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("failed to read token: %w", err)
+		}
+		token = strings.TrimSpace(token)
+
+		if token == "" {
+			return fmt.Errorf("token cannot be empty")
+		}
+
+		// Validate and save the token
+		err = validateAndSaveToken(opts, token)
+		if err == nil {
+			return nil // Success!
+		}
+
+		// Token validation failed - offer to retry
+		fmt.Fprintln(opts.streams.Out, "")
+		opts.streams.Error("Token validation failed: %v", err)
+		fmt.Fprintln(opts.streams.Out, "")
+		fmt.Fprintln(opts.streams.Out, "Please ensure your API token:")
+		fmt.Fprintln(opts.streams.Out, "  - Was copied correctly (no extra spaces)")
+		fmt.Fprintln(opts.streams.Out, "  - Has the required permissions/scopes:")
+		fmt.Fprintln(opts.streams.Out, "    - Account: Read")
+		fmt.Fprintln(opts.streams.Out, "    - Repositories: Read (minimum)")
+		fmt.Fprintln(opts.streams.Out, "  - Has not expired")
+		fmt.Fprintln(opts.streams.Out, "")
+		fmt.Fprint(opts.streams.Out, "Try again? [Y/n]: ")
+
+		retry, _ := reader.ReadString('\n')
+		retry = strings.TrimSpace(strings.ToLower(retry))
+
+		if retry == "n" || retry == "no" {
+			return fmt.Errorf("authentication cancelled")
+		}
+		// Loop continues for retry
 	}
-	token = strings.TrimSpace(token)
-
-	if token == "" {
-		return fmt.Errorf("token cannot be empty")
-	}
-
-	// Validate and save the token
-	return validateAndSaveToken(opts, token)
 }
 
 func interactiveOAuthLogin(opts *loginOptions, reader *bufio.Reader) error {
