@@ -291,6 +291,22 @@ func (c *Client) DeclinePullRequest(ctx context.Context, workspace, repoSlug str
 	return ParseResponse[*PullRequest](resp)
 }
 
+// ReopenPullRequest reopens a declined pull request
+func (c *Client) ReopenPullRequest(ctx context.Context, workspace, repoSlug string, prID int64) (*PullRequest, error) {
+	path := fmt.Sprintf("/repositories/%s/%s/pullrequests/%d", workspace, repoSlug, prID)
+
+	body := map[string]interface{}{
+		"state": "OPEN",
+	}
+
+	resp, err := c.Put(ctx, path, body)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseResponse[*PullRequest](resp)
+}
+
 // ApprovePullRequest approves a pull request
 func (c *Client) ApprovePullRequest(ctx context.Context, workspace, repoSlug string, prID int64) (*Participant, error) {
 	path := fmt.Sprintf("/repositories/%s/%s/pullrequests/%d/approve", workspace, repoSlug, prID)
