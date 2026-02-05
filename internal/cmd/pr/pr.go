@@ -31,12 +31,15 @@ your changes are merged.`,
 	cmd.AddCommand(NewCmdList(streams))
 	cmd.AddCommand(NewCmdView(streams))
 	cmd.AddCommand(NewCmdCreate(streams))
+	cmd.AddCommand(NewCmdEdit(streams))
 	cmd.AddCommand(NewCmdCheckout(streams))
 	cmd.AddCommand(NewCmdMerge(streams))
 	cmd.AddCommand(NewCmdClose(streams))
+	cmd.AddCommand(NewCmdReopen(streams))
 	cmd.AddCommand(NewCmdReview(streams))
 	cmd.AddCommand(NewCmdDiff(streams))
 	cmd.AddCommand(NewCmdComment(streams))
+	cmd.AddCommand(NewCmdChecks(streams))
 
 	return cmd
 }
