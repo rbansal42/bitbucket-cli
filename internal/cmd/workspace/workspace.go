@@ -29,6 +29,7 @@ your team. Each workspace can contain multiple repositories and projects.`,
 	cmd.AddCommand(NewCmdList(streams))
 	cmd.AddCommand(NewCmdView(streams))
 	cmd.AddCommand(NewCmdMembers(streams))
+	cmd.AddCommand(NewCmdSetDefault(streams))
 
 	return cmd
 }

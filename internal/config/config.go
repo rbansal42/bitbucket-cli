@@ -21,12 +21,13 @@ const (
 
 // Config represents the main configuration
 type Config struct {
-	GitProtocol string `yaml:"git_protocol,omitempty"`
-	Editor      string `yaml:"editor,omitempty"`
-	Prompt      string `yaml:"prompt,omitempty"`
-	Pager       string `yaml:"pager,omitempty"`
-	Browser     string `yaml:"browser,omitempty"`
-	HTTPTimeout int    `yaml:"http_timeout,omitempty"`
+	GitProtocol      string `yaml:"git_protocol,omitempty"`
+	Editor           string `yaml:"editor,omitempty"`
+	Prompt           string `yaml:"prompt,omitempty"`
+	Pager            string `yaml:"pager,omitempty"`
+	Browser          string `yaml:"browser,omitempty"`
+	HTTPTimeout      int    `yaml:"http_timeout,omitempty"`
+	DefaultWorkspace string `yaml:"default_workspace,omitempty"`
 }
 
 // HostConfig represents per-host configuration
@@ -227,4 +228,23 @@ func (h HostsConfig) AuthenticatedHosts() []string {
 		}
 	}
 	return hosts
+}
+
+// GetDefaultWorkspace returns the default workspace from config
+func GetDefaultWorkspace() (string, error) {
+	config, err := LoadConfig()
+	if err != nil {
+		return "", err
+	}
+	return config.DefaultWorkspace, nil
+}
+
+// SetDefaultWorkspace sets the default workspace in config
+func SetDefaultWorkspace(workspace string) error {
+	config, err := LoadConfig()
+	if err != nil {
+		return err
+	}
+	config.DefaultWorkspace = workspace
+	return SaveConfig(config)
 }

@@ -107,14 +107,22 @@ func interactiveLogin(opts *loginOptions) error {
 	}
 	choice = strings.TrimSpace(choice)
 
+	var loginErr error
 	switch choice {
 	case "1":
-		return interactiveAPITokenLogin(opts, reader)
+		loginErr = interactiveAPITokenLogin(opts, reader)
 	case "2":
-		return interactiveOAuthLogin(opts, reader)
+		loginErr = interactiveOAuthLogin(opts, reader)
 	default:
 		return fmt.Errorf("invalid choice: %s (enter 1 or 2)", choice)
 	}
+
+	if loginErr != nil {
+		return loginErr
+	}
+
+	// After successful login, ask about default workspace
+	return promptForDefaultWorkspace(opts, reader)
 }
 
 func interactiveAPITokenLogin(opts *loginOptions, reader *bufio.Reader) error {
@@ -373,6 +381,126 @@ func validateAndSaveAPIToken(opts *loginOptions, email, apiToken string) error {
 
 	opts.streams.Success("Logged in as: %s (%s)", user.DisplayName, email)
 	return nil
+}
+
+func promptForDefaultWorkspace(opts *loginOptions, reader *bufio.Reader) error {
+	// Check current default workspace
+	currentDefault, _ := config.GetDefaultWorkspace()
+	if currentDefault != "" {
+		fmt.Fprintln(opts.streams.Out, "")
+		opts.streams.Info("Current default workspace: %s", currentDefault)
+		return nil
+	}
+
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprint(opts.streams.Out, "Would you like to set a default workspace? [y/N]: ")
+
+	answer, err := reader.ReadString('\n')
+	if err != nil {
+		return nil // Don't fail login if this fails
+	}
+	answer = strings.TrimSpace(strings.ToLower(answer))
+
+	if answer != "y" && answer != "yes" {
+		fmt.Fprintln(opts.streams.Out, "You can set a default workspace later with: bb workspace set-default <workspace>")
+		return nil
+	}
+
+	// List available workspaces
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintln(opts.streams.Out, "Fetching your workspaces...")
+
+	apiClient, err := getAuthenticatedClient(opts.hostname)
+	if err != nil {
+		opts.streams.Warning("Could not fetch workspaces: %v", err)
+		fmt.Fprintln(opts.streams.Out, "You can set a default workspace later with: bb workspace set-default <workspace>")
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	result, err := apiClient.ListWorkspaces(ctx, nil)
+	if err != nil {
+		opts.streams.Warning("Could not fetch workspaces: %v", err)
+		fmt.Fprintln(opts.streams.Out, "You can set a default workspace later with: bb workspace set-default <workspace>")
+		return nil
+	}
+
+	workspaces := result.Values
+	if len(workspaces) == 0 {
+		opts.streams.Info("No workspaces found")
+		return nil
+	}
+
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprintln(opts.streams.Out, "Available workspaces:")
+	for i, membership := range workspaces {
+		fmt.Fprintf(opts.streams.Out, "  [%d] %s (%s)\n", i+1, membership.Workspace.Name, membership.Workspace.Slug)
+	}
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprint(opts.streams.Out, "Enter number to select (or press Enter to skip): ")
+
+	selection, err := reader.ReadString('\n')
+	if err != nil {
+		return nil
+	}
+	selection = strings.TrimSpace(selection)
+
+	if selection == "" {
+		fmt.Fprintln(opts.streams.Out, "You can set a default workspace later with: bb workspace set-default <workspace>")
+		return nil
+	}
+
+	var idx int
+	if _, err := fmt.Sscanf(selection, "%d", &idx); err != nil || idx < 1 || idx > len(workspaces) {
+		opts.streams.Warning("Invalid selection")
+		return nil
+	}
+
+	selectedWorkspace := workspaces[idx-1].Workspace.Slug
+	if err := config.SetDefaultWorkspace(selectedWorkspace); err != nil {
+		opts.streams.Warning("Failed to set default workspace: %v", err)
+		return nil
+	}
+
+	opts.streams.Success("Default workspace set to: %s", selectedWorkspace)
+	return nil
+}
+
+func getAuthenticatedClient(hostname string) (*api.Client, error) {
+	hosts, err := config.LoadHostsConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	user := hosts.GetActiveUser(hostname)
+	if user == "" {
+		return nil, fmt.Errorf("not logged in")
+	}
+
+	tokenData, _, err := config.GetTokenFromEnvOrKeyring(hostname, user)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if this is Basic Auth credentials
+	if strings.HasPrefix(tokenData, "basic:") {
+		credentials := strings.TrimPrefix(tokenData, "basic:")
+		parts := strings.SplitN(credentials, ":", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid credentials format")
+		}
+		return api.NewClient(api.WithBasicAuth(parts[0], parts[1])), nil
+	}
+
+	// Try to parse as JSON (OAuth token)
+	var tokenResp oauthTokenResponse
+	if err := json.Unmarshal([]byte(tokenData), &tokenResp); err == nil && tokenResp.AccessToken != "" {
+		return api.NewClient(api.WithToken(tokenResp.AccessToken)), nil
+	}
+
+	return api.NewClient(api.WithToken(tokenData)), nil
 }
 
 func performOAuthFlow(opts *loginOptions, clientID, clientSecret string) error {
