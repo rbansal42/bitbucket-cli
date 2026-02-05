@@ -32,11 +32,11 @@ bb auth login [flags]
 
 ## Description
 
-Authenticate with Bitbucket Cloud using either an interactive OAuth flow or an App Password.
+Authenticate with Bitbucket Cloud using either OAuth 2.0 or a Repository Access Token.
 
-By default, `bb auth login` starts an interactive OAuth flow that opens your browser to complete authentication. The CLI will receive and store the access token automatically.
+By default, `bb auth login` starts an OAuth flow that opens your browser to complete authentication. This requires setting up an OAuth consumer first (see Authentication Guide).
 
-Alternatively, you can authenticate using an App Password by passing the `--with-token` flag. App Passwords can be created in your Bitbucket account settings under **Personal settings > App passwords**.
+Alternatively, you can authenticate using a Repository Access Token by passing the `--with-token` flag. Repository Access Tokens can be created in your repository settings under **Repository settings > Access tokens**.
 
 The authentication token is stored securely in your system's credential store when available, or in a local configuration file.
 
@@ -57,14 +57,14 @@ Authenticate interactively via OAuth:
 $ bb auth login
 ```
 
-Authenticate using an App Password:
+Authenticate using a Repository Access Token:
 
 ```
 $ bb auth login --with-token < token.txt
 ```
 
 ```
-$ echo "your-app-password" | bb auth login --with-token
+$ echo "$BITBUCKET_TOKEN" | bb auth login --with-token
 ```
 
 Authenticate and set a default workspace:

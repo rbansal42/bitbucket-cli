@@ -8,386 +8,294 @@ The `bb` CLI supports two authentication methods:
 
 | Method | Best For | Setup Complexity |
 |--------|----------|------------------|
-| **OAuth** | Interactive use, full API access | Simple (browser-based) |
-| **App Passwords** | CI/CD, scripts, automation | Moderate (manual setup) |
+| **OAuth 2.0** | Interactive use, full API access | Medium (one-time setup) |
+| **Repository Access Token** | CI/CD, scripts, single repo access | Easy |
 
-Both methods store credentials locally and support multiple Bitbucket accounts.
+> **Important:** Bitbucket has deprecated App Passwords. Use OAuth or Repository Access Tokens instead.
 
 ## Quick Start
 
-Run the interactive login command:
+### For Interactive Use (OAuth)
+
+```bash
+# 1. Set up OAuth consumer (one-time, see detailed instructions below)
+export BB_OAUTH_CLIENT_ID="your_client_id"
+export BB_OAUTH_CLIENT_SECRET="your_client_secret"
+
+# 2. Login
+bb auth login
+```
+
+### For CI/CD (Repository Access Token)
+
+```bash
+echo "$BITBUCKET_TOKEN" | bb auth login --with-token
+```
+
+---
+
+## OAuth 2.0 Authentication
+
+OAuth is the recommended method for interactive use. It requires a one-time setup of an "OAuth consumer" in Bitbucket.
+
+### Step 1: Create an OAuth Consumer
+
+1. Go to your **Workspace Settings**:
+   ```
+   https://bitbucket.org/YOUR_WORKSPACE/workspace/settings/oauth-consumers
+   ```
+
+2. Click **"Add consumer"**
+
+3. Configure the consumer:
+   - **Name:** `bb CLI` (or any descriptive name)
+   - **Callback URL:** `http://localhost:8372/callback`
+   - **This is a private consumer:** ✓ Check this box
+
+4. Select **Permissions** based on what you need:
+
+   | Permission | Commands |
+   |------------|----------|
+   | Account: Read | `bb auth status`, user info |
+   | Repositories: Read | `bb repo list`, `bb repo view`, `bb repo clone` |
+   | Repositories: Write | `bb repo create`, `bb repo fork` |
+   | Repositories: Admin | `bb repo delete` |
+   | Pull requests: Read | `bb pr list`, `bb pr view`, `bb pr diff` |
+   | Pull requests: Write | `bb pr create`, `bb pr merge`, `bb pr review` |
+   | Issues: Read | `bb issue list`, `bb issue view` |
+   | Issues: Write | `bb issue create`, `bb issue close` |
+   | Pipelines: Read | `bb pipeline list`, `bb pipeline view`, `bb pipeline logs` |
+   | Pipelines: Write | `bb pipeline run`, `bb pipeline stop` |
+   | Snippets: Read | `bb snippet list`, `bb snippet view` |
+   | Snippets: Write | `bb snippet create`, `bb snippet delete` |
+
+5. Click **"Save"**
+
+6. Copy the **Key** (Client ID) and **Secret** (Client Secret) shown
+
+### Step 2: Configure Environment Variables
+
+Add to your shell profile (`~/.bashrc`, `~/.zshrc`, `~/.config/fish/config.fish`):
+
+```bash
+export BB_OAUTH_CLIENT_ID="your_key_here"
+export BB_OAUTH_CLIENT_SECRET="your_secret_here"
+```
+
+Reload your shell:
+
+```bash
+source ~/.zshrc  # or ~/.bashrc
+```
+
+### Step 3: Authenticate
 
 ```bash
 bb auth login
 ```
 
-This will guide you through authentication setup.
+This will:
+1. Open your browser to Bitbucket's authorization page
+2. Ask you to grant permissions
+3. Redirect back to complete authentication
+4. Store tokens securely
 
-## Authentication Methods
-
-### OAuth (Recommended)
-
-OAuth provides the simplest authentication experience for interactive use.
-
-#### How It Works
-
-1. Run `bb auth login`
-2. Select "OAuth" when prompted
-3. A browser window opens to Bitbucket's authorization page
-4. Authorize the `bb` CLI application
-5. The CLI receives and stores your access token
+### Verify
 
 ```bash
-$ bb auth login
-? Select authentication method: OAuth
-Opening browser for authentication...
-Waiting for authorization...
-✓ Logged in as yourname
+bb auth status
 ```
 
-#### OAuth Token Refresh
+### Token Refresh
 
-OAuth tokens expire after a period of time. The CLI automatically refreshes tokens using the stored refresh token, so you typically won't need to re-authenticate.
+OAuth tokens expire (typically after 2 hours). The CLI automatically refreshes them using the stored refresh token. If refresh fails, re-run `bb auth login`.
 
-### App Passwords
+---
 
-App Passwords are ideal for:
-- CI/CD pipelines
-- Automated scripts
-- Environments without a browser
-- Fine-grained permission control
+## Repository Access Tokens
 
-#### Creating an App Password
+Repository Access Tokens are scoped to a single repository, making them ideal for CI/CD pipelines.
 
-1. Log in to [Bitbucket Cloud](https://bitbucket.org)
-2. Click your avatar (bottom-left) > **Personal settings**
-3. Under **Access management**, click **App passwords**
-4. Click **Create app password**
-5. Enter a descriptive label (e.g., "bb CLI - work laptop")
-6. Select the required permissions (see below)
-7. Click **Create**
-8. **Copy the password immediately** - it won't be shown again
+### Create a Repository Access Token
 
-#### Required Permissions
+1. Go to your repository:
+   ```
+   https://bitbucket.org/WORKSPACE/REPO/admin/access-tokens
+   ```
 
-For full `bb` CLI functionality, enable these permissions:
+2. Click **"Create Repository Access Token"**
 
-| Permission | Required For |
-|------------|--------------|
-| **Account: Read** | `bb auth status`, user info |
-| **Repositories: Read** | `bb repo list`, `bb repo view` |
-| **Repositories: Write** | `bb repo clone`, `bb repo create` |
-| **Pull requests: Read** | `bb pr list`, `bb pr view` |
-| **Pull requests: Write** | `bb pr create`, `bb pr merge` |
-| **Issues: Read** | `bb issue list`, `bb issue view` |
-| **Issues: Write** | `bb issue create` |
-| **Pipelines: Read** | `bb pipeline list`, `bb pipeline view` |
-| **Pipelines: Write** | `bb pipeline run` |
-| **Webhooks: Read & Write** | Webhook management |
+3. Configure:
+   - **Name:** Descriptive name (e.g., `ci-pipeline`)
+   - **Scopes:** Select required permissions
 
-**Minimal permissions** for read-only access:
-- Account: Read
-- Repositories: Read
-- Pull requests: Read
+4. Click **"Create"** and **copy the token immediately**
 
-#### Using an App Password
+### Use the Token
 
 ```bash
-$ bb auth login
-? Select authentication method: App Password
-? Bitbucket username: yourname
-? App password: ********
-✓ Logged in as yourname
+# Interactive
+bb auth login --with-token
+# Paste your token when prompted
+
+# Non-interactive (CI/CD)
+echo "$BITBUCKET_TOKEN" | bb auth login --with-token
+
+# Or use environment variable directly (no login needed)
+export BB_TOKEN="your_repository_access_token"
+bb pr list
 ```
 
-Or provide credentials directly:
-
-```bash
-bb auth login --username yourname --app-password your-app-password
-```
+---
 
 ## Token Storage
 
-### Storage Location
+### Storage Locations
 
-Credentials are stored in:
+| OS | Primary Storage | Fallback |
+|----|-----------------|----------|
+| macOS | Keychain | `~/.config/bb/hosts.yml` |
+| Linux | Secret Service (GNOME Keyring, KWallet) | `~/.config/bb/hosts.yml` |
+| Windows | Credential Manager | `%APPDATA%\bb\hosts.yml` |
 
-```
-~/.config/bb/hosts.yml
-```
-
-On Windows:
-
-```
-%APPDATA%\bb\hosts.yml
-```
-
-### File Format
+### hosts.yml Format
 
 ```yaml
 bitbucket.org:
   user: yourname
-  oauth_token: your-oauth-token
-  oauth_refresh_token: your-refresh-token
-  # OR for app passwords:
-  # app_password: your-app-password
+  oauth_token: <stored securely>
 ```
 
-### File Permissions
+The CLI sets restrictive permissions (0600) on the credentials file.
 
-The CLI automatically sets restrictive permissions (0600) on the credentials file. Only you can read or write to it.
-
-To verify:
-
-```bash
-ls -la ~/.config/bb/hosts.yml
-# -rw------- 1 yourname yourname 256 Jan 15 10:30 hosts.yml
-```
+---
 
 ## Environment Variables
 
-Override stored credentials using environment variables:
-
 | Variable | Description |
 |----------|-------------|
-| `BB_TOKEN` | OAuth token or App Password |
-| `BITBUCKET_TOKEN` | Alternative to `BB_TOKEN` |
-| `BB_USERNAME` | Bitbucket username (required with App Passwords) |
-| `BITBUCKET_USERNAME` | Alternative to `BB_USERNAME` |
+| `BB_TOKEN` | Access token (highest priority) |
+| `BITBUCKET_TOKEN` | Alternative token variable |
+| `BB_OAUTH_CLIENT_ID` | OAuth consumer key |
+| `BB_OAUTH_CLIENT_SECRET` | OAuth consumer secret |
 
-### Examples
+### Precedence Order
 
-```bash
-# Using an App Password
-export BB_USERNAME=yourname
-export BB_TOKEN=your-app-password
-bb pr list
+1. `BB_TOKEN` environment variable
+2. `BITBUCKET_TOKEN` environment variable  
+3. Stored OAuth token (from `bb auth login`)
 
-# Single command
-BB_USERNAME=yourname BB_TOKEN=your-app-password bb pr list
+---
+
+## CI/CD Examples
+
+### GitHub Actions
+
+```yaml
+jobs:
+  bitbucket-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install bb CLI
+        run: go install github.com/rbansal42/bitbucket-cli/cmd/bb@latest
+
+      - name: Authenticate
+        run: echo "${{ secrets.BITBUCKET_TOKEN }}" | bb auth login --with-token
+
+      - name: List PRs
+        run: bb pr list --repo myworkspace/myrepo
 ```
 
-### Precedence
+### Bitbucket Pipelines
 
-The CLI checks for credentials in this order:
-
-1. Environment variables (`BB_TOKEN` / `BITBUCKET_TOKEN`)
-2. Stored credentials (`~/.config/bb/hosts.yml`)
-
-Environment variables always take priority over stored credentials.
-
-## Multiple Accounts
-
-### Adding Additional Accounts
-
-The `bb` CLI supports multiple Bitbucket accounts. Add accounts by logging in with different usernames:
-
-```bash
-# First account
-bb auth login
-# Login as: personal-account
-
-# Second account
-bb auth login
-# Login as: work-account
+```yaml
+pipelines:
+  default:
+    - step:
+        script:
+          - go install github.com/rbansal42/bitbucket-cli/cmd/bb@latest
+          - export BB_TOKEN=$REPOSITORY_ACCESS_TOKEN
+          - bb pipeline list
 ```
 
-### Switching Accounts
+### GitLab CI
 
-Use the `--account` flag to specify which account to use:
-
-```bash
-# List PRs using work account
-bb pr list --account work-account
-
-# Create repo using personal account
-bb repo create my-project --account personal-account
+```yaml
+bitbucket-integration:
+  script:
+    - go install github.com/rbansal42/bitbucket-cli/cmd/bb@latest
+    - echo "$BITBUCKET_TOKEN" | bb auth login --with-token
+    - bb pr create --title "Sync from GitLab"
 ```
 
-### Setting Default Account
+---
 
-Set a default account for a repository:
+## Troubleshooting
 
-```bash
-bb config set account work-account
-```
+### "OAuth client credentials not configured"
 
-Or globally:
+You haven't set up the OAuth consumer environment variables:
 
 ```bash
-bb config set --global account personal-account
+export BB_OAUTH_CLIENT_ID="your_key"
+export BB_OAUTH_CLIENT_SECRET="your_secret"
 ```
 
-### Viewing Configured Accounts
+See [Step 1: Create an OAuth Consumer](#step-1-create-an-oauth-consumer).
 
-```bash
-$ bb auth status
-bitbucket.org
-  ✓ personal-account (default)
-  ✓ work-account
-```
+### "invalid token" error
 
-## Checking Authentication Status
+- Token may have expired
+- Token doesn't have required permissions
+- Try re-authenticating: `bb auth login`
 
-View your current authentication state:
+### "authorization failed: access_denied"
 
-```bash
-$ bb auth status
-bitbucket.org
-  ✓ Logged in as yourname
-  ✓ Token valid until 2024-03-15 14:30:00
-  ✓ Scopes: repository, pullrequest, issue, pipeline
-```
+You denied the permission request in the browser. Run `bb auth login` again and click "Grant access".
 
-Check with verbose output:
+### 401 Unauthorized
 
-```bash
-bb auth status --verbose
-```
+- Token is invalid or expired
+- Re-authenticate: `bb auth logout && bb auth login`
+
+### 403 Forbidden
+
+- Token doesn't have required permissions
+- Check OAuth consumer permissions or create a new token with correct scopes
+
+---
 
 ## Logging Out
 
 Remove stored credentials:
 
 ```bash
-# Log out of default account
 bb auth logout
-
-# Log out of specific account
-bb auth logout --account work-account
-
-# Log out of all accounts
-bb auth logout --all
 ```
 
-## Troubleshooting
-
-### "Authentication required" errors
-
-```
-Error: authentication required. Run 'bb auth login' to authenticate.
-```
-
-**Solutions:**
-1. Run `bb auth login` to authenticate
-2. Check if `~/.config/bb/hosts.yml` exists and is readable
-3. Verify environment variables are set correctly
-
-### "Bad credentials" or 401 errors
-
-```
-Error: 401 Unauthorized
-```
-
-**Solutions:**
-1. Regenerate your App Password in Bitbucket settings
-2. Re-authenticate: `bb auth login`
-3. Check that your account has access to the repository
-
-### "Forbidden" or 403 errors
-
-```
-Error: 403 Forbidden
-```
-
-**Solutions:**
-1. Verify your App Password has the required permissions
-2. Check repository access permissions in Bitbucket
-3. Ensure you're using the correct account for the repository
-
-### OAuth token refresh failures
-
-```
-Error: failed to refresh OAuth token
-```
-
-**Solutions:**
-1. Log out and log back in: `bb auth logout && bb auth login`
-2. Check your internet connection
-3. Verify the OAuth application hasn't been revoked in Bitbucket settings
-
-### Permission denied on credentials file
-
-```
-Error: permission denied reading ~/.config/bb/hosts.yml
-```
-
-**Solutions:**
-```bash
-# Fix file permissions
-chmod 600 ~/.config/bb/hosts.yml
-
-# Fix directory permissions
-chmod 700 ~/.config/bb
-```
-
-### Environment variable not recognized
-
-Ensure you're exporting variables correctly:
-
-```bash
-# Wrong - variable only set in subshell
-BB_TOKEN=xxx
-bb pr list  # Won't see the token
-
-# Correct - export the variable
-export BB_TOKEN=xxx
-bb pr list
-
-# Correct - inline for single command
-BB_TOKEN=xxx bb pr list
-```
+---
 
 ## Security Best Practices
 
 ### Do
 
-- **Use OAuth** for interactive sessions - tokens auto-expire and refresh
-- **Use App Passwords** with minimal required permissions for automation
-- **Rotate App Passwords** periodically and after team member departures
-- **Use environment variables** in CI/CD instead of storing credentials in code
-- **Review authorized applications** in Bitbucket settings regularly
+- Use **OAuth** for interactive sessions
+- Use **Repository Access Tokens** (scoped to one repo) for CI/CD
+- Store tokens in CI/CD **secret management** (not in code)
+- **Rotate tokens** periodically
+- Use **minimal permissions** for your use case
 
 ### Don't
 
-- **Don't commit credentials** to version control
-- **Don't share App Passwords** between users or systems
-- **Don't grant unnecessary permissions** to App Passwords
-- **Don't store credentials** in shell history (use `--app-password` flag carefully)
+- Don't commit tokens to version control
+- Don't share tokens between users or systems
+- Don't use overly broad permissions
+- Don't store tokens in shell history
 
-### CI/CD Security
+---
 
-For CI/CD pipelines:
+## Related
 
-```yaml
-# GitHub Actions example
-- name: List open PRs
-  env:
-    BB_USERNAME: ${{ secrets.BITBUCKET_USERNAME }}
-    BB_TOKEN: ${{ secrets.BITBUCKET_APP_PASSWORD }}
-  run: bb pr list
-```
-
-```yaml
-# Bitbucket Pipelines example
-script:
-  - export BB_USERNAME=$BITBUCKET_USERNAME
-  - export BB_TOKEN=$BITBUCKET_APP_PASSWORD
-  - bb pr list
-```
-
-### Auditing Access
-
-Periodically review your App Passwords:
-
-1. Go to Bitbucket > Personal settings > App passwords
-2. Remove any unused or unrecognized passwords
-3. Check the "Last used" date for each password
-4. Revoke access for former team members or decommissioned systems
-
-## Related Commands
-
-- [`bb auth login`](/docs/commands/auth-login.md) - Authenticate with Bitbucket
-- [`bb auth logout`](/docs/commands/auth-logout.md) - Remove stored credentials
-- [`bb auth status`](/docs/commands/auth-status.md) - View authentication status
-- [`bb config`](/docs/commands/config.md) - Manage CLI configuration
+- [Configuration Guide](configuration.md)
+- [Troubleshooting Guide](troubleshooting.md)
+- [bb auth command reference](../commands/bb_auth.md)

@@ -137,16 +137,23 @@ func loginWithOAuth(opts *loginOptions) error {
 		return fmt.Errorf(`OAuth client credentials not configured.
 
 To use OAuth authentication, you need to create an OAuth consumer in Bitbucket:
-1. Go to https://bitbucket.org/account/settings/app-passwords/ (for your personal account)
-   or your workspace settings > OAuth consumers
-2. Create a new OAuth consumer with:
-   - Callback URL: http://localhost:8372/callback
-   - Permissions: Account (Read), Repositories (Read/Write), Pull requests (Read/Write), etc.
-3. Set the environment variables:
-   export BB_OAUTH_CLIENT_ID="your_client_id"
-   export BB_OAUTH_CLIENT_SECRET="your_client_secret"
 
-Alternatively, use --with-token to authenticate with an access token:
+1. Go to your Workspace settings > OAuth consumers
+   (https://bitbucket.org/YOUR_WORKSPACE/workspace/settings/oauth-consumers)
+   
+2. Click "Add consumer" and configure:
+   - Name: bb CLI
+   - Callback URL: http://localhost:8372/callback
+   - Permissions: Account (Read), Repositories (Read/Write), 
+     Pull requests (Read/Write), Pipelines (Read/Write), etc.
+   
+3. After creating, copy the Key and Secret, then set environment variables:
+   export BB_OAUTH_CLIENT_ID="your_key"
+   export BB_OAUTH_CLIENT_SECRET="your_secret"
+
+4. Run 'bb auth login' again
+
+Alternatively, use --with-token to authenticate with a Repository Access Token:
   bb auth login --with-token`)
 	}
 
