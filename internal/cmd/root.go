@@ -9,6 +9,7 @@ import (
 	"github.com/rbansal42/bb/internal/cmd/auth"
 	"github.com/rbansal42/bb/internal/cmd/branch"
 	"github.com/rbansal42/bb/internal/cmd/browse"
+	"github.com/rbansal42/bb/internal/cmd/completion"
 	bbconfigcmd "github.com/rbansal42/bb/internal/cmd/config"
 	"github.com/rbansal42/bb/internal/cmd/issue"
 	"github.com/rbansal42/bb/internal/cmd/pipeline"
@@ -79,6 +80,7 @@ func init() {
 	rootCmd.AddCommand(auth.NewCmdAuth(GetStreams()))
 	rootCmd.AddCommand(api.NewCmdAPI(GetStreams()))
 	rootCmd.AddCommand(branch.NewCmdBranch(GetStreams()))
+	rootCmd.AddCommand(completion.NewCmdCompletion(GetStreams()))
 	rootCmd.AddCommand(browse.NewCmdBrowse(GetStreams()))
 	rootCmd.AddCommand(bbconfigcmd.NewCmdConfig(GetStreams()))
 	rootCmd.AddCommand(issue.NewCmdIssue(GetStreams()))
