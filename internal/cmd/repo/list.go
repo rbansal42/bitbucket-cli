@@ -11,6 +11,7 @@ import (
 
 	"github.com/rbansal42/bitbucket-cli/internal/api"
 	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
 	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
@@ -50,7 +51,13 @@ By default, repositories are sorted by last updated time.`,
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.Workspace == "" {
-				return fmt.Errorf("workspace is required. Use --workspace or -w to specify")
+				defaultWs, err := config.GetDefaultWorkspace()
+				if err == nil && defaultWs != "" {
+					opts.Workspace = defaultWs
+				}
+			}
+			if opts.Workspace == "" {
+				return fmt.Errorf("workspace is required. Use --workspace or -w to specify, or set a default with 'bb workspace set-default'")
 			}
 			return runList(cmd.Context(), opts)
 		},

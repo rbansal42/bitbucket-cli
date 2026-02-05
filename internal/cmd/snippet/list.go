@@ -11,6 +11,7 @@ import (
 
 	"github.com/rbansal42/bitbucket-cli/internal/api"
 	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
 	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
@@ -52,12 +53,10 @@ Snippets are workspace-scoped and can be filtered by your role.`,
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.Workspace, "workspace", "w", "", "Workspace slug (required)")
+	cmd.Flags().StringVarP(&opts.Workspace, "workspace", "w", "", "Workspace slug (uses default if set)")
 	cmd.Flags().StringVar(&opts.Role, "role", "", "Filter by role: owner, contributor, member")
 	cmd.Flags().IntVarP(&opts.Limit, "limit", "l", 30, "Maximum number of snippets to list")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
-
-	cmd.MarkFlagRequired("workspace")
 
 	return cmd
 }
@@ -70,6 +69,17 @@ var validRoles = map[string]bool{
 }
 
 func runList(ctx context.Context, opts *ListOptions) error {
+	// Fall back to default workspace if not specified
+	if opts.Workspace == "" {
+		defaultWs, err := config.GetDefaultWorkspace()
+		if err == nil && defaultWs != "" {
+			opts.Workspace = defaultWs
+		}
+	}
+	if opts.Workspace == "" {
+		return fmt.Errorf("workspace is required. Use --workspace or -w to specify, or set a default with 'bb workspace set-default'")
+	}
+
 	// Validate workspace
 	if _, err := cmdutil.ParseWorkspace(opts.Workspace); err != nil {
 		return err

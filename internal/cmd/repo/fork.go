@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
 	"github.com/rbansal42/bitbucket-cli/internal/git"
 	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
@@ -99,10 +100,17 @@ func runFork(opts *forkOptions) error {
 	// Determine destination workspace
 	destWorkspace := opts.workspace
 	if destWorkspace == "" {
+		// Try to get default workspace from config
+		defaultWs, err := config.GetDefaultWorkspace()
+		if err == nil && defaultWs != "" {
+			destWorkspace = defaultWs
+		}
+	}
+	if destWorkspace == "" {
 		// Try to get current user's workspace
 		user, err := client.GetCurrentUser(ctx)
 		if err != nil {
-			return fmt.Errorf("could not determine destination workspace: %w\nUse --workspace to specify", err)
+			return fmt.Errorf("could not determine destination workspace: %w\nUse --workspace to specify or run 'bb workspace set-default'", err)
 		}
 		destWorkspace = user.Username
 	}

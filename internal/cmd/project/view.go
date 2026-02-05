@@ -11,6 +11,7 @@ import (
 	"github.com/rbansal42/bitbucket-cli/internal/api"
 	"github.com/rbansal42/bitbucket-cli/internal/browser"
 	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
 	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
@@ -48,7 +49,13 @@ short uppercase identifiers like "PROJ" or "DEV".`,
 			opts.key = args[0]
 
 			if opts.workspace == "" {
-				return fmt.Errorf("workspace is required. Use --workspace or -w to specify")
+				defaultWs, err := config.GetDefaultWorkspace()
+				if err == nil && defaultWs != "" {
+					opts.workspace = defaultWs
+				}
+			}
+			if opts.workspace == "" {
+				return fmt.Errorf("workspace is required. Use --workspace or -w to specify, or set a default with 'bb workspace set-default'")
 			}
 
 			return runView(cmd.Context(), opts)

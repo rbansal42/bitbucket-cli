@@ -10,6 +10,7 @@ import (
 
 	"github.com/rbansal42/bitbucket-cli/internal/api"
 	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
 	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
@@ -48,7 +49,13 @@ identifier (e.g., "PROJ", "DEV", "CORE").`,
   bb project create -w myworkspace -k CORE -n "Core" --json`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.workspace == "" {
-				return fmt.Errorf("workspace is required. Use --workspace or -w to specify")
+				defaultWs, err := config.GetDefaultWorkspace()
+				if err == nil && defaultWs != "" {
+					opts.workspace = defaultWs
+				}
+			}
+			if opts.workspace == "" {
+				return fmt.Errorf("workspace is required. Use --workspace or -w to specify, or set a default with 'bb workspace set-default'")
 			}
 			if opts.key == "" {
 				return fmt.Errorf("project key is required. Use --key or -k to specify")
