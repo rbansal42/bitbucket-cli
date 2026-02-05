@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -157,11 +158,16 @@ func outputSnippetDetails(streams *iostreams.IOStreams, snippet *api.Snippet) er
 		fmt.Fprintf(streams.Out, "Updated:     %s\n", updated)
 	}
 
-	// Files
+	// Files (sorted for deterministic output)
 	if len(snippet.Files) > 0 {
 		fmt.Fprintln(streams.Out)
 		fmt.Fprintln(streams.Out, "Files:")
+		filenames := make([]string, 0, len(snippet.Files))
 		for filename := range snippet.Files {
+			filenames = append(filenames, filename)
+		}
+		sort.Strings(filenames)
+		for _, filename := range filenames {
 			fmt.Fprintf(streams.Out, "  %s\n", filename)
 		}
 	}
@@ -181,9 +187,16 @@ func outputRawFiles(ctx context.Context, client *api.Client, opts *ViewOptions, 
 		return nil
 	}
 
+	// Get sorted list of filenames for deterministic output
+	filenames := make([]string, 0, len(snippet.Files))
+	for filename := range snippet.Files {
+		filenames = append(filenames, filename)
+	}
+	sort.Strings(filenames)
+
 	// Fetch and display each file's content
 	isFirst := true
-	for filename := range snippet.Files {
+	for _, filename := range filenames {
 		if !isFirst {
 			fmt.Fprintln(opts.Streams.Out) // Blank line between files
 		}

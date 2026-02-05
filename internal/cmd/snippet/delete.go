@@ -3,6 +3,7 @@ package snippet
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -17,6 +18,7 @@ type DeleteOptions struct {
 	Workspace string
 	SnippetID string
 	Force     bool
+	JSON      bool
 	Streams   *iostreams.IOStreams
 }
 
@@ -48,6 +50,7 @@ Use --force to skip the confirmation prompt.`,
 
 	cmd.Flags().StringVarP(&opts.Workspace, "workspace", "w", "", "Workspace slug (required)")
 	cmd.Flags().BoolVarP(&opts.Force, "force", "f", false, "Skip confirmation prompt")
+	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 
 	cmd.MarkFlagRequired("workspace")
 
@@ -77,7 +80,8 @@ func runDelete(ctx context.Context, opts *DeleteOptions) error {
 
 		response = strings.TrimSpace(strings.ToLower(response))
 		if response != "y" && response != "yes" {
-			return fmt.Errorf("deletion cancelled")
+			opts.Streams.Info("Deletion cancelled")
+			return nil
 		}
 	}
 
@@ -94,6 +98,21 @@ func runDelete(ctx context.Context, opts *DeleteOptions) error {
 	// Delete snippet
 	if err := client.DeleteSnippet(ctx, opts.Workspace, opts.SnippetID); err != nil {
 		return fmt.Errorf("failed to delete snippet: %w", err)
+	}
+
+	// Output result
+	if opts.JSON {
+		output := map[string]interface{}{
+			"deleted":    true,
+			"snippet_id": opts.SnippetID,
+			"workspace":  opts.Workspace,
+		}
+		data, err := json.MarshalIndent(output, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON: %w", err)
+		}
+		fmt.Fprintln(opts.Streams.Out, string(data))
+		return nil
 	}
 
 	opts.Streams.Success("Deleted snippet %s", opts.SnippetID)

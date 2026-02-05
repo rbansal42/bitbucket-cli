@@ -28,10 +28,9 @@ code that can be shared and versioned.`,
 
 	cmd.AddCommand(NewCmdList(streams))
 	cmd.AddCommand(NewCmdView(streams))
+	cmd.AddCommand(NewCmdCreate(streams))
 	cmd.AddCommand(NewCmdEdit(streams))
 	cmd.AddCommand(NewCmdDelete(streams))
-	// TODO: Add create subcommand
-	// cmd.AddCommand(NewCmdCreate(streams))
 
 	return cmd
 }

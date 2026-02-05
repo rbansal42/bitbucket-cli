@@ -61,10 +61,22 @@ Snippets are workspace-scoped and can be filtered by your role.`,
 	return cmd
 }
 
+// validRoles are the valid values for the --role flag
+var validRoles = map[string]bool{
+	"owner":       true,
+	"contributor": true,
+	"member":      true,
+}
+
 func runList(ctx context.Context, opts *ListOptions) error {
 	// Validate workspace
 	if err := parseWorkspace(opts.Workspace); err != nil {
 		return err
+	}
+
+	// Validate role if provided
+	if opts.Role != "" && !validRoles[opts.Role] {
+		return fmt.Errorf("invalid role %q: must be one of owner, contributor, member", opts.Role)
 	}
 
 	// Get API client
