@@ -10,6 +10,7 @@ import (
 
 	"github.com/rbansal42/bb/internal/api"
 	"github.com/rbansal42/bb/internal/browser"
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -64,13 +65,13 @@ You can specify a pipeline by its build number or UUID.`,
 
 func runView(ctx context.Context, opts *ViewOptions) error {
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
 
 	// Parse repository
-	workspace, repoSlug, err := parseRepository(opts.Repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.Repo)
 	if err != nil {
 		return err
 	}

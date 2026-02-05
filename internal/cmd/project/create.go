@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rbansal42/bb/internal/api"
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -72,7 +73,7 @@ identifier (e.g., "PROJ", "DEV", "CORE").`,
 
 func runCreate(ctx context.Context, opts *createOptions) error {
 	// Get authenticated client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

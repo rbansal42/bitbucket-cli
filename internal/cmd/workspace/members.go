@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rbansal42/bb/internal/api"
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -56,7 +57,7 @@ Shows the username, display name, and role of each member.`,
 
 func runMembers(ctx context.Context, opts *MembersOptions) error {
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

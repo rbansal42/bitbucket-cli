@@ -2,6 +2,8 @@ package pr
 
 import (
 	"testing"
+
+	"github.com/rbansal42/bb/internal/cmdutil"
 )
 
 func TestParsePRNumber(t *testing.T) {
@@ -161,7 +163,7 @@ func TestParseRepository(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			workspace, repo, err := parseRepository(tt.repoFlag)
+			workspace, repo, err := cmdutil.ParseRepository(tt.repoFlag)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseRepository() error = %v, wantErr %v", err, tt.wantErr)
@@ -293,7 +295,7 @@ func TestParsePRNumberErrorMessages(t *testing.T) {
 
 // TestParseRepositoryErrorMessages verifies error message quality
 func TestParseRepositoryErrorMessages(t *testing.T) {
-	_, _, err := parseRepository("invalid-format")
+	_, _, err := cmdutil.ParseRepository("invalid-format")
 	if err == nil {
 		t.Fatal("expected error but got nil")
 	}

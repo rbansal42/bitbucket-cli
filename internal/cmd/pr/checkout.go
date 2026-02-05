@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/git"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
@@ -68,7 +69,7 @@ use --force to overwrite it.`,
 
 func runCheckout(opts *checkoutOptions) error {
 	// Resolve repository
-	workspace, repoSlug, err := parseRepository(opts.repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.repo)
 	if err != nil {
 		return err
 	}
@@ -76,7 +77,7 @@ func runCheckout(opts *checkoutOptions) error {
 	opts.streams.Info("Fetching pull request #%d...", opts.prNumber)
 
 	// Get authenticated API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

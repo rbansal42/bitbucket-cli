@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rbansal42/bb/internal/api"
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -63,13 +64,13 @@ By default, this command detects the repository from your git remote.`,
 
 func runCreate(ctx context.Context, opts *CreateOptions) error {
 	// Parse repository
-	workspace, repoSlug, err := parseRepository(opts.Repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.Repo)
 	if err != nil {
 		return err
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

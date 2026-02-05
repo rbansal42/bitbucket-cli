@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -73,12 +74,12 @@ func runReview(opts *reviewOptions, args []string) error {
 		return err
 	}
 
-	workspace, repoSlug, err := parseRepository(opts.repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.repo)
 	if err != nil {
 		return err
 	}
 
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

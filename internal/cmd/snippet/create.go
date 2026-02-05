@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rbansal42/bb/internal/api"
+	"github.com/rbansal42/bb/internal/cmdutil"
 	"github.com/rbansal42/bb/internal/iostreams"
 )
 
@@ -63,12 +64,12 @@ If no files are specified, reads from stdin.`,
 
 func runCreate(ctx context.Context, opts *CreateOptions) error {
 	// Validate workspace
-	if err := parseWorkspace(opts.Workspace); err != nil {
+	if _, err := cmdutil.ParseWorkspace(opts.Workspace); err != nil {
 		return err
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
