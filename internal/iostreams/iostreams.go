@@ -15,8 +15,8 @@ type IOStreams struct {
 	Out    io.Writer
 	ErrOut io.Writer
 
-	colorEnabled bool
-	is256enabled bool
+	colorEnabled  bool
+	is256enabled  bool
 	terminalWidth int
 }
 

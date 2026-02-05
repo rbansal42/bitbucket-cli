@@ -21,12 +21,12 @@ const (
 
 // Config represents the main configuration
 type Config struct {
-	GitProtocol  string `yaml:"git_protocol,omitempty"`
-	Editor       string `yaml:"editor,omitempty"`
-	Prompt       string `yaml:"prompt,omitempty"`
-	Pager        string `yaml:"pager,omitempty"`
-	Browser      string `yaml:"browser,omitempty"`
-	HTTPTimeout  int    `yaml:"http_timeout,omitempty"`
+	GitProtocol string `yaml:"git_protocol,omitempty"`
+	Editor      string `yaml:"editor,omitempty"`
+	Prompt      string `yaml:"prompt,omitempty"`
+	Pager       string `yaml:"pager,omitempty"`
+	Browser     string `yaml:"browser,omitempty"`
+	HTTPTimeout int    `yaml:"http_timeout,omitempty"`
 }
 
 // HostConfig represents per-host configuration
