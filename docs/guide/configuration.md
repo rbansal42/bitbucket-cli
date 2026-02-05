@@ -63,7 +63,7 @@ Authentication credentials are stored separately in `hosts.yml`:
 ```yaml
 bitbucket.org:
   user: your-username
-  oauth_token: your-app-password-or-token
+  oauth_token: your-access token-or-token
   git_protocol: ssh  # Override per-host
 
 # For Bitbucket Data Center / Server installations
@@ -120,7 +120,7 @@ bb config unset editor
 # Use SSH (requires SSH key setup)
 bb config set git_protocol ssh
 
-# Use HTTPS (requires app password)
+# Use HTTPS (requires access token)
 bb config set git_protocol https
 ```
 
@@ -130,9 +130,9 @@ bb config set git_protocol https
 - Your organization requires SSH
 
 **When to use HTTPS:**
-- Simpler setup with app passwords
+- Simpler setup with access tokens
 - Working behind corporate firewalls that block SSH
-- Using Bitbucket app passwords for authentication
+- Using Bitbucket access tokens for authentication
 
 The protocol affects:
 - `bb repo clone` - URL used for cloning
@@ -181,7 +181,7 @@ For CI/CD pipelines, use environment variables for authentication:
 ```yaml
 # Bitbucket Pipelines example
 script:
-  - export BB_TOKEN=$BB_APP_PASSWORD
+  - export BB_TOKEN=$BB_access token
   - bb pr list --state OPEN
 ```
 
