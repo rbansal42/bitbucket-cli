@@ -213,8 +213,11 @@ or --input for reading from a file.`,
 
 // getAuthToken retrieves the authentication token
 func getAuthToken() (string, error) {
-	// Check environment variable first
+	// Check environment variables first (BB_TOKEN takes precedence)
 	if token := os.Getenv("BB_TOKEN"); token != "" {
+		return token, nil
+	}
+	if token := os.Getenv("BITBUCKET_TOKEN"); token != "" {
 		return token, nil
 	}
 
