@@ -336,7 +336,7 @@ func validateAndSaveToken(opts *loginOptions, token string) error {
 		return fmt.Errorf("failed to save hosts config: %w", err)
 	}
 
-	opts.streams.Success("Logged in as %s", user.Username)
+	opts.streams.Success("Logged in as: %s (%s)", user.DisplayName, user.Username)
 	return nil
 }
 
@@ -371,7 +371,7 @@ func validateAndSaveAPIToken(opts *loginOptions, email, apiToken string) error {
 		return fmt.Errorf("failed to save hosts config: %w", err)
 	}
 
-	opts.streams.Success("Logged in as %s", user.Username)
+	opts.streams.Success("Logged in as: %s (%s)", user.DisplayName, email)
 	return nil
 }
 
@@ -529,7 +529,7 @@ func performOAuthFlow(opts *loginOptions, clientID, clientSecret string) error {
 		return fmt.Errorf("failed to save hosts config: %w", err)
 	}
 
-	opts.streams.Success("Logged in as %s", user.Username)
+	opts.streams.Success("Logged in as: %s (%s)", user.DisplayName, user.Username)
 	return nil
 }
 
