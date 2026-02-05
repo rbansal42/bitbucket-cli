@@ -36,9 +36,9 @@ This guide covers common issues you may encounter when using the `bb` CLI and ho
    bb auth login
    ```
 
-2. If using an app password, generate a new one in Bitbucket:
-   - Go to **Personal Settings** > **App passwords**
-   - Create a new app password with the required permissions
+2. If using an access token, generate a new one in Bitbucket:
+   - Go to **Personal Settings** > **access tokens**
+   - Create a new access token with the required permissions
    - Run `bb auth login` and enter the new password
 
 ### Wrong Permissions
@@ -57,7 +57,7 @@ This guide covers common issues you may encounter when using the `bb` CLI and ho
    bb auth login --scopes repository,pullrequest,pipeline
    ```
 
-3. For app passwords, ensure these permissions are enabled:
+3. For access tokens, ensure these permissions are enabled:
    - **Repository:** Read, Write
    - **Pull requests:** Read, Write
    - **Pipelines:** Read, Write
@@ -467,15 +467,15 @@ bb auth status --all
 Set the `BB_TOKEN` environment variable:
 
 ```bash
-export BB_TOKEN=your-app-password
+export BB_TOKEN=your-access token
 bb pr list --repo workspace/repo
 ```
 
-Or use `BB_USERNAME` and `BB_APP_PASSWORD`:
+Or use `BB_USERNAME` and `BB_access token`:
 
 ```bash
 export BB_USERNAME=your-username
-export BB_APP_PASSWORD=your-app-password
+export BB_access token=your-access token
 ```
 
 ### How do I configure bb for my organization?

@@ -15,7 +15,7 @@ An unofficial command-line interface for Bitbucket Cloud, inspired by GitHub's `
 - **Branches**: Create, list, and delete branches
 - **Workspaces & Projects**: Browse and manage Bitbucket workspaces and projects
 - **Snippets**: Create and manage code snippets
-- **Authentication**: Secure OAuth and App Password support
+- **Authentication**: Secure OAuth and access token support
 - **Shell Completions**: Tab completion for Bash, Zsh, Fish, and PowerShell
 
 ## Installation
@@ -57,7 +57,7 @@ go build -o bb ./cmd/bb
 bb auth login
 ```
 
-This will guide you through OAuth authentication or App Password setup.
+This will guide you through OAuth authentication or access token setup.
 
 ### 2. Clone a Repository
 

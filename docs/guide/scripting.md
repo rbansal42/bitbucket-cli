@@ -27,7 +27,7 @@ The `bb` CLI is designed to work well in scripts and automation. Here are the ke
 set -euo pipefail
 
 # Authenticate using environment variable
-export BB_TOKEN="your-app-password"
+export BB_TOKEN="your-access token"
 
 # Run bb commands
 bb pr list --json | jq '.[] | .title'
@@ -39,15 +39,15 @@ For scripted use, set authentication via environment variables:
 
 ```bash
 # Option 1: BB_TOKEN (preferred)
-export BB_TOKEN="your-bitbucket-app-password"
+export BB_TOKEN="your-bitbucket-access token"
 
 # Option 2: BITBUCKET_TOKEN (alternative)
-export BITBUCKET_TOKEN="your-bitbucket-app-password"
+export BITBUCKET_TOKEN="your-bitbucket-access token"
 ```
 
-Create an App Password in Bitbucket:
-1. Go to Personal Settings > App passwords
-2. Create a new app password with required permissions
+Create an access token in Bitbucket:
+1. Go to Personal Settings > access tokens
+2. Create a new access token with required permissions
 3. Store it securely (environment variable, secrets manager, etc.)
 
 ### Specifying Repository Context
@@ -760,7 +760,7 @@ jobs:
       
       - name: Create PR in Bitbucket
         env:
-          BB_TOKEN: ${{ secrets.BITBUCKET_APP_PASSWORD }}
+          BB_TOKEN: ${{ secrets.BITBUCKET_access token }}
         run: |
           bb pr create \
             --repo myworkspace/myrepo \
@@ -777,7 +777,7 @@ stages:
   - deploy
 
 variables:
-  BB_TOKEN: $BITBUCKET_APP_PASSWORD
+  BB_TOKEN: $BITBUCKET_access token
 
 deploy:
   stage: deploy
@@ -803,7 +803,7 @@ pipeline {
     agent any
     
     environment {
-        BB_TOKEN = credentials('bitbucket-app-password')
+        BB_TOKEN = credentials('bitbucket-access token')
     }
     
     stages {
@@ -896,7 +896,7 @@ steps:
         --branch main
     displayName: 'Trigger Bitbucket Pipeline'
     env:
-      BB_TOKEN: $(BITBUCKET_APP_PASSWORD)
+      BB_TOKEN: $(BITBUCKET_access token)
 ```
 
 ### Bitbucket Pipelines (Self-Triggering)
