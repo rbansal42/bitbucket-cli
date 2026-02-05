@@ -96,7 +96,7 @@ func runSetDefault(ctx context.Context, opts *SetDefaultOptions) error {
 
 	if opts.RepoArg != "" {
 		// Parse provided argument
-		workspace, repoSlug, err = parseRepoArg(opts.RepoArg)
+		workspace, repoSlug, err = cmdutil.ParseRepository(opts.RepoArg)
 		if err != nil {
 			return err
 		}

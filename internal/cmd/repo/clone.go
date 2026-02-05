@@ -86,7 +86,7 @@ func runClone(opts *cloneOptions) error {
 		}
 	} else {
 		// Parse workspace/repo format
-		workspace, repoSlug, err := parseRepoArg(opts.repoArg)
+		workspace, repoSlug, err := cmdutil.ParseRepository(opts.repoArg)
 		if err != nil {
 			return err
 		}

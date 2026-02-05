@@ -40,28 +40,6 @@ func getPreferredProtocol() string {
 	return "https"
 }
 
-// parseRepoArg parses a repository argument in workspace/repo format
-// This is used when a repository is provided as a command argument (not a flag)
-func parseRepoArg(arg string) (workspace, repoSlug string, err error) {
-	if arg == "" {
-		return "", "", fmt.Errorf("repository argument is required (workspace/repo)")
-	}
-
-	parts := strings.SplitN(arg, "/", 2)
-	if len(parts) != 2 {
-		return "", "", fmt.Errorf("invalid repository format: %s (expected workspace/repo)", arg)
-	}
-
-	// Validate both parts are non-empty
-	if parts[0] == "" || parts[1] == "" {
-		return "", "", fmt.Errorf("invalid repository format: %s (workspace and repo cannot be empty)", arg)
-	}
-
-	return parts[0], parts[1], nil
-}
-
-
-
 // confirmDeletion prompts the user to confirm deletion by typing the repository name
 func confirmDeletion(repoName string, reader io.Reader) bool {
 	scanner := bufio.NewScanner(reader)
