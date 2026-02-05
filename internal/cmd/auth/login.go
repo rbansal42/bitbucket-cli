@@ -118,37 +118,17 @@ func interactiveLogin(opts *loginOptions) error {
 }
 
 func interactiveAPITokenLogin(opts *loginOptions, reader *bufio.Reader) error {
+	const apiTokenURL = "https://id.atlassian.com/manage-profile/security/api-tokens"
+
 	fmt.Fprintln(opts.streams.Out, "")
 	fmt.Fprintln(opts.streams.Out, "=== API Token Authentication ===")
 	fmt.Fprintln(opts.streams.Out, "")
-	fmt.Fprintln(opts.streams.Out, "You'll need to create an API token in Bitbucket.")
-	fmt.Fprintln(opts.streams.Out, "")
-	fmt.Fprint(opts.streams.Out, "Enter your workspace name (e.g., 'myteam'): ")
-
-	workspace, err := reader.ReadString('\n')
-	if err != nil {
-		return fmt.Errorf("failed to read input: %w", err)
-	}
-	workspace = strings.TrimSpace(workspace)
-
-	if workspace == "" {
-		return fmt.Errorf("workspace name is required")
-	}
-
-	// Construct the URL for creating API tokens
-	tokenURL := fmt.Sprintf("https://bitbucket.org/%s/workspace/settings/access-tokens", workspace)
-
-	fmt.Fprintln(opts.streams.Out, "")
 	fmt.Fprintln(opts.streams.Out, "To create an API token:")
 	fmt.Fprintln(opts.streams.Out, "")
-	fmt.Fprintf(opts.streams.Out, "  1. Opening: %s\n", tokenURL)
-	fmt.Fprintln(opts.streams.Out, "  2. Click 'Create access token'")
-	fmt.Fprintln(opts.streams.Out, "  3. Name it (e.g., 'bb-cli')")
-	fmt.Fprintln(opts.streams.Out, "  4. Select permissions:")
-	fmt.Fprintln(opts.streams.Out, "     - Account: Read")
-	fmt.Fprintln(opts.streams.Out, "     - Repositories: Read, Write")
-	fmt.Fprintln(opts.streams.Out, "     - Pull requests: Read, Write")
-	fmt.Fprintln(opts.streams.Out, "  5. Click 'Create' and copy the token")
+	fmt.Fprintf(opts.streams.Out, "  1. Opening: %s\n", apiTokenURL)
+	fmt.Fprintln(opts.streams.Out, "  2. Click 'Create API token'")
+	fmt.Fprintln(opts.streams.Out, "  3. Enter a label (e.g., 'bb-cli')")
+	fmt.Fprintln(opts.streams.Out, "  4. Click 'Create' and copy the token")
 	fmt.Fprintln(opts.streams.Out, "")
 	fmt.Fprint(opts.streams.Out, "Press Enter to open browser (or 'n' to skip): ")
 
@@ -156,10 +136,24 @@ func interactiveAPITokenLogin(opts *loginOptions, reader *bufio.Reader) error {
 	skipBrowser = strings.TrimSpace(strings.ToLower(skipBrowser))
 
 	if skipBrowser != "n" && skipBrowser != "no" {
-		if err := browser.Open(tokenURL); err != nil {
+		if err := browser.Open(apiTokenURL); err != nil {
 			opts.streams.Warning("Failed to open browser: %v", err)
-			fmt.Fprintf(opts.streams.Out, "Please open manually: %s\n", tokenURL)
+			fmt.Fprintf(opts.streams.Out, "Please open manually: %s\n", apiTokenURL)
 		}
+	}
+
+	// Get email for Basic Auth
+	fmt.Fprintln(opts.streams.Out, "")
+	fmt.Fprint(opts.streams.Out, "Enter your Atlassian account email: ")
+
+	email, err := reader.ReadString('\n')
+	if err != nil {
+		return fmt.Errorf("failed to read email: %w", err)
+	}
+	email = strings.TrimSpace(email)
+
+	if email == "" {
+		return fmt.Errorf("email cannot be empty")
 	}
 
 	// Token entry loop with retry on invalid token
@@ -177,8 +171,8 @@ func interactiveAPITokenLogin(opts *loginOptions, reader *bufio.Reader) error {
 			return fmt.Errorf("token cannot be empty")
 		}
 
-		// Validate and save the token
-		err = validateAndSaveToken(opts, token)
+		// Validate and save the token (using Basic Auth)
+		err = validateAndSaveAPIToken(opts, email, token)
 		if err == nil {
 			return nil // Success!
 		}
@@ -187,12 +181,10 @@ func interactiveAPITokenLogin(opts *loginOptions, reader *bufio.Reader) error {
 		fmt.Fprintln(opts.streams.Out, "")
 		opts.streams.Error("Token validation failed: %v", err)
 		fmt.Fprintln(opts.streams.Out, "")
-		fmt.Fprintln(opts.streams.Out, "Please ensure your API token:")
-		fmt.Fprintln(opts.streams.Out, "  - Was copied correctly (no extra spaces)")
-		fmt.Fprintln(opts.streams.Out, "  - Has the required permissions/scopes:")
-		fmt.Fprintln(opts.streams.Out, "    - Account: Read")
-		fmt.Fprintln(opts.streams.Out, "    - Repositories: Read (minimum)")
-		fmt.Fprintln(opts.streams.Out, "  - Has not expired")
+		fmt.Fprintln(opts.streams.Out, "Please ensure:")
+		fmt.Fprintln(opts.streams.Out, "  - Your email is correct")
+		fmt.Fprintln(opts.streams.Out, "  - The API token was copied correctly (no extra spaces)")
+		fmt.Fprintln(opts.streams.Out, "  - The API token has not been revoked")
 		fmt.Fprintln(opts.streams.Out, "")
 		fmt.Fprint(opts.streams.Out, "Try again? [Y/n]: ")
 
@@ -317,7 +309,7 @@ func loginWithTokenFromStdin(opts *loginOptions) error {
 func validateAndSaveToken(opts *loginOptions, token string) error {
 	opts.streams.Info("Validating token...")
 
-	// Validate token by making an API request
+	// Validate token by making an API request (Bearer token)
 	client := api.NewClient(api.WithToken(token))
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -330,6 +322,41 @@ func validateAndSaveToken(opts *loginOptions, token string) error {
 	// Store token in keyring
 	if err := config.SetToken(opts.hostname, user.Username, token); err != nil {
 		return fmt.Errorf("failed to store token: %w", err)
+	}
+
+	// Update hosts config
+	hosts, err := config.LoadHostsConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load hosts config: %w", err)
+	}
+
+	hosts.SetActiveUser(opts.hostname, user.Username)
+
+	if err := config.SaveHostsConfig(hosts); err != nil {
+		return fmt.Errorf("failed to save hosts config: %w", err)
+	}
+
+	opts.streams.Success("Logged in as %s", user.Username)
+	return nil
+}
+
+func validateAndSaveAPIToken(opts *loginOptions, email, apiToken string) error {
+	opts.streams.Info("Validating credentials...")
+
+	// Validate using Basic Auth (email:api_token)
+	client := api.NewClient(api.WithBasicAuth(email, apiToken))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	user, err := client.GetCurrentUser(ctx)
+	if err != nil {
+		return fmt.Errorf("authentication failed: %w", err)
+	}
+
+	// Store credentials - we store as "email:token" format for Basic Auth
+	credentials := email + ":" + apiToken
+	if err := config.SetToken(opts.hostname, user.Username, "basic:"+credentials); err != nil {
+		return fmt.Errorf("failed to store credentials: %w", err)
 	}
 
 	// Update hosts config
