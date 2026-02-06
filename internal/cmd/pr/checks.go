@@ -139,7 +139,7 @@ func outputChecksTable(streams *iostreams.IOStreams, statuses []api.CommitStatus
 		if name == "" {
 			name = s.Key
 		}
-		desc := truncateString(s.Description, 50)
+		desc := cmdutil.TruncateString(s.Description, 50)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\n", status, name, desc)
 	}

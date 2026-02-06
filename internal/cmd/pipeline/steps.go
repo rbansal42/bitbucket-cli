@@ -100,8 +100,6 @@ func runSteps(ctx context.Context, opts *StepsOptions, pipelineArg string) error
 	return outputStepsTable(opts.Streams, result.Values)
 }
 
-
-
 func outputStepsJSON(streams *iostreams.IOStreams, steps []api.PipelineStep) error {
 	output := make([]map[string]interface{}, len(steps))
 	for i, step := range steps {
@@ -155,7 +153,7 @@ func outputStepsTable(streams *iostreams.IOStreams, steps []api.PipelineStep) er
 		if name == "" {
 			name = "(unnamed)"
 		}
-		name = truncateString(name, 40)
+		name = cmdutil.TruncateString(name, 40)
 		status := formatStepStatus(streams, step.State)
 		duration := formatStepDuration(step.StartedOn, step.CompletedOn)
 

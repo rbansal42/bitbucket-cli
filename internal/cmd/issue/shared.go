@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/rbansal42/bitbucket-cli/internal/api"
 	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
@@ -94,71 +93,6 @@ func formatIssueKind(streams *iostreams.IOStreams, kind string) string {
 	default:
 		return kind
 	}
-}
-
-// timeAgo returns a human-readable relative time string
-func timeAgo(t time.Time) string {
-	duration := time.Since(t)
-
-	switch {
-	case duration < time.Minute:
-		return "just now"
-	case duration < time.Hour:
-		mins := int(duration.Minutes())
-		if mins == 1 {
-			return "1 minute ago"
-		}
-		return fmt.Sprintf("%d minutes ago", mins)
-	case duration < 24*time.Hour:
-		hours := int(duration.Hours())
-		if hours == 1 {
-			return "1 hour ago"
-		}
-		return fmt.Sprintf("%d hours ago", hours)
-	case duration < 30*24*time.Hour:
-		days := int(duration.Hours() / 24)
-		if days == 1 {
-			return "1 day ago"
-		}
-		return fmt.Sprintf("%d days ago", days)
-	case duration < 365*24*time.Hour:
-		months := int(duration.Hours() / 24 / 30)
-		if months == 1 {
-			return "1 month ago"
-		}
-		return fmt.Sprintf("%d months ago", months)
-	default:
-		years := int(duration.Hours() / 24 / 365)
-		if years == 1 {
-			return "1 year ago"
-		}
-		return fmt.Sprintf("%d years ago", years)
-	}
-}
-
-// truncateString truncates a string to maxLen characters with ellipsis
-func truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return s[:maxLen]
-	}
-	return s[:maxLen-3] + "..."
-}
-
-// getUserDisplayName returns the best available display name for a user
-func getUserDisplayName(user *api.User) string {
-	if user == nil {
-		return "-"
-	}
-	if user.DisplayName != "" {
-		return user.DisplayName
-	}
-	if user.Username != "" {
-		return user.Username
-	}
-	return "unknown"
 }
 
 // confirmPrompt prompts the user with a yes/no question and returns true if they confirm

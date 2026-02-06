@@ -98,61 +98,6 @@ func formatDuration(seconds int) string {
 	return fmt.Sprintf("%ds", secs)
 }
 
-// formatTimeAgo formats a time as a human-readable relative time
-func formatTimeAgo(t time.Time) string {
-	if t.IsZero() {
-		return "-"
-	}
-
-	duration := time.Since(t)
-
-	switch {
-	case duration < time.Minute:
-		return "just now"
-	case duration < time.Hour:
-		mins := int(duration.Minutes())
-		if mins == 1 {
-			return "1 minute ago"
-		}
-		return fmt.Sprintf("%d minutes ago", mins)
-	case duration < 24*time.Hour:
-		hours := int(duration.Hours())
-		if hours == 1 {
-			return "1 hour ago"
-		}
-		return fmt.Sprintf("%d hours ago", hours)
-	case duration < 30*24*time.Hour:
-		days := int(duration.Hours() / 24)
-		if days == 1 {
-			return "1 day ago"
-		}
-		return fmt.Sprintf("%d days ago", days)
-	case duration < 365*24*time.Hour:
-		months := int(duration.Hours() / 24 / 30)
-		if months == 1 {
-			return "1 month ago"
-		}
-		return fmt.Sprintf("%d months ago", months)
-	default:
-		years := int(duration.Hours() / 24 / 365)
-		if years == 1 {
-			return "1 year ago"
-		}
-		return fmt.Sprintf("%d years ago", years)
-	}
-}
-
-// truncateString truncates a string to a maximum length
-func truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return s[:maxLen]
-	}
-	return s[:maxLen-3] + "..."
-}
-
 // getCommitShort returns the first 7 characters of a commit hash
 func getCommitShort(hash string) string {
 	if len(hash) > 7 {

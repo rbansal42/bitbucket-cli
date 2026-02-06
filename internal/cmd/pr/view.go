@@ -200,12 +200,7 @@ func findPRForBranch(ctx context.Context, workspace, repoSlug, branch string) (i
 }
 
 func outputJSON(streams *iostreams.IOStreams, pr *PullRequest) error {
-	data, err := json.MarshalIndent(pr, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, pr)
 }
 
 func displayPR(streams *iostreams.IOStreams, pr *PullRequest) error {
@@ -255,7 +250,7 @@ func displayPR(streams *iostreams.IOStreams, pr *PullRequest) error {
 	// Created date
 	createdAt, err := time.Parse(time.RFC3339, pr.CreatedOn)
 	if err == nil {
-		fmt.Fprintf(streams.Out, "Created: %s\n", timeAgo(createdAt))
+		fmt.Fprintf(streams.Out, "Created: %s\n", cmdutil.TimeAgo(createdAt))
 	}
 
 	return nil
@@ -273,44 +268,4 @@ func getUserDisplayName(user PRUser) string {
 		return user.Nickname
 	}
 	return "unknown"
-}
-
-// timeAgo returns a human-readable relative time string
-func timeAgo(t time.Time) string {
-	duration := time.Since(t)
-
-	switch {
-	case duration < time.Minute:
-		return "just now"
-	case duration < time.Hour:
-		mins := int(duration.Minutes())
-		if mins == 1 {
-			return "1 minute ago"
-		}
-		return fmt.Sprintf("%d minutes ago", mins)
-	case duration < 24*time.Hour:
-		hours := int(duration.Hours())
-		if hours == 1 {
-			return "1 hour ago"
-		}
-		return fmt.Sprintf("%d hours ago", hours)
-	case duration < 30*24*time.Hour:
-		days := int(duration.Hours() / 24)
-		if days == 1 {
-			return "1 day ago"
-		}
-		return fmt.Sprintf("%d days ago", days)
-	case duration < 365*24*time.Hour:
-		months := int(duration.Hours() / 24 / 30)
-		if months == 1 {
-			return "1 month ago"
-		}
-		return fmt.Sprintf("%d months ago", months)
-	default:
-		years := int(duration.Hours() / 24 / 365)
-		if years == 1 {
-			return "1 year ago"
-		}
-		return fmt.Sprintf("%d years ago", years)
-	}
 }

@@ -114,8 +114,6 @@ func runView(ctx context.Context, opts *ViewOptions) error {
 	return displayPipeline(opts.Streams, pipeline, steps)
 }
 
-
-
 func getPipelineWebURL(workspace, repoSlug string, buildNumber int) string {
 	return fmt.Sprintf("https://bitbucket.org/%s/%s/pipelines/results/%d",
 		workspace, repoSlug, buildNumber)
@@ -229,9 +227,9 @@ func displayPipeline(streams *iostreams.IOStreams, pipeline *api.Pipeline, steps
 	}
 
 	// Timestamps
-	fmt.Fprintf(streams.Out, "Started:   %s\n", formatTimeAgo(pipeline.CreatedOn))
+	fmt.Fprintf(streams.Out, "Started:   %s\n", cmdutil.TimeAgo(pipeline.CreatedOn))
 	if pipeline.CompletedOn != nil && !pipeline.CompletedOn.IsZero() {
-		fmt.Fprintf(streams.Out, "Completed: %s\n", formatTimeAgo(*pipeline.CompletedOn))
+		fmt.Fprintf(streams.Out, "Completed: %s\n", cmdutil.TimeAgo(*pipeline.CompletedOn))
 	}
 
 	// Steps summary
