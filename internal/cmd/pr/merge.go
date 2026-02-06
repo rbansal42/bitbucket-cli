@@ -142,7 +142,7 @@ func runMerge(opts *mergeOptions) error {
 	}
 
 	// Check PR state
-	if pr.State != "OPEN" {
+	if pr.State != api.PRStateOpen {
 		return fmt.Errorf("pull request #%d is not open (state: %s)", opts.prNumber, pr.State)
 	}
 
