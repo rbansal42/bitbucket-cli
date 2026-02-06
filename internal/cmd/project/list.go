@@ -2,15 +2,16 @@ package project
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"text/tabwriter"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // listOptions holds the options for the list command
@@ -44,7 +45,13 @@ This command shows projects you have access to in the specified workspace.`,
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.Workspace == "" {
-				return fmt.Errorf("workspace is required. Use --workspace or -w to specify")
+				defaultWs, err := config.GetDefaultWorkspace()
+				if err == nil && defaultWs != "" {
+					opts.Workspace = defaultWs
+				}
+			}
+			if opts.Workspace == "" {
+				return fmt.Errorf("workspace is required. Use --workspace or -w to specify, or set a default with 'bb workspace set-default'")
 			}
 			return runList(cmd.Context(), opts)
 		},
@@ -63,7 +70,7 @@ func runList(ctx context.Context, opts *listOptions) error {
 	defer cancel()
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
@@ -108,13 +115,7 @@ func outputListJSON(streams *iostreams.IOStreams, projects []api.ProjectFull) er
 		}
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputListTable(streams *iostreams.IOStreams, projects []api.ProjectFull) error {
@@ -122,17 +123,13 @@ func outputListTable(streams *iostreams.IOStreams, projects []api.ProjectFull) e
 
 	// Print header
 	header := "KEY\tNAME\tDESCRIPTION\tVISIBILITY"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, proj := range projects {
 		key := proj.Key
-		name := truncateString(proj.Name, 30)
-		desc := truncateString(proj.Description, 40)
+		name := cmdutil.TruncateString(proj.Name, 30)
+		desc := cmdutil.TruncateString(proj.Description, 40)
 		visibility := formatVisibility(streams, proj.IsPrivate)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", key, name, desc, visibility)
@@ -153,14 +150,4 @@ func formatVisibility(streams *iostreams.IOStreams, isPrivate bool) string {
 		return iostreams.Green + "public" + iostreams.Reset
 	}
 	return "public"
-}
-
-func truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return s[:maxLen]
-	}
-	return s[:maxLen-3] + "..."
 }

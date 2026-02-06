@@ -2,15 +2,14 @@ package issue
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"text/tabwriter"
-	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // ListOptions holds the options for the list command
@@ -80,13 +79,13 @@ priority, or assignee.`,
 
 func runList(ctx context.Context, opts *ListOptions) error {
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
 
 	// Parse repository
-	workspace, repoSlug, err := parseRepository(opts.Repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.Repo)
 	if err != nil {
 		return err
 	}
@@ -129,8 +128,8 @@ func outputListJSON(streams *iostreams.IOStreams, issues []api.Issue) error {
 			"state":      issue.State,
 			"kind":       issue.Kind,
 			"priority":   issue.Priority,
-			"reporter":   getUserDisplayName(issue.Reporter),
-			"assignee":   getUserDisplayName(issue.Assignee),
+			"reporter":   cmdutil.GetUserDisplayName(issue.Reporter),
+			"assignee":   cmdutil.GetUserDisplayName(issue.Assignee),
 			"votes":      issue.Votes,
 			"created_on": issue.CreatedOn,
 			"updated_on": issue.UpdatedOn,
@@ -140,13 +139,7 @@ func outputListJSON(streams *iostreams.IOStreams, issues []api.Issue) error {
 		}
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputIssueTable(streams *iostreams.IOStreams, issues []api.Issue) error {
@@ -154,32 +147,21 @@ func outputIssueTable(streams *iostreams.IOStreams, issues []api.Issue) error {
 
 	// Print header
 	header := "#\tTITLE\tSTATE\tKIND\tPRIORITY\tASSIGNEE\tUPDATED"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, issue := range issues {
 		id := fmt.Sprintf("%d", issue.ID)
-		title := truncateString(issue.Title, 40)
+		title := cmdutil.TruncateString(issue.Title, 40)
 		state := formatIssueState(streams, issue.State)
 		kind := formatIssueKind(streams, issue.Kind)
 		priority := formatIssuePriority(streams, issue.Priority)
-		assignee := truncateString(getUserDisplayName(issue.Assignee), 15)
-		updated := formatUpdated(issue.UpdatedOn)
+		assignee := cmdutil.TruncateString(cmdutil.GetUserDisplayName(issue.Assignee), 15)
+		updated := cmdutil.TimeAgo(issue.UpdatedOn)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			id, title, state, kind, priority, assignee, updated)
 	}
 
 	return w.Flush()
-}
-
-func formatUpdated(t time.Time) string {
-	if t.IsZero() {
-		return "-"
-	}
-	return timeAgo(t)
 }

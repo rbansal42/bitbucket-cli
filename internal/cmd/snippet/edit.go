@@ -10,8 +10,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // EditOptions holds the options for the edit command
@@ -51,19 +53,28 @@ You can update the title and/or add/update files.`,
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.Workspace, "workspace", "w", "", "Workspace slug (required)")
+	cmd.Flags().StringVarP(&opts.Workspace, "workspace", "w", "", "Workspace slug")
 	cmd.Flags().StringVarP(&opts.Title, "title", "t", "", "New snippet title")
 	cmd.Flags().StringArrayVarP(&opts.Files, "file", "f", nil, "File to update (can be repeated)")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
-
-	cmd.MarkFlagRequired("workspace")
 
 	return cmd
 }
 
 func runEdit(ctx context.Context, opts *EditOptions) error {
+	// Fall back to default workspace if not specified
+	if opts.Workspace == "" {
+		defaultWs, err := config.GetDefaultWorkspace()
+		if err == nil && defaultWs != "" {
+			opts.Workspace = defaultWs
+		}
+	}
+	if opts.Workspace == "" {
+		return fmt.Errorf("workspace is required. Use --workspace or -w to specify, or set a default with 'bb workspace set-default'")
+	}
+
 	// Validate workspace
-	if err := parseWorkspace(opts.Workspace); err != nil {
+	if _, err := cmdutil.ParseWorkspace(opts.Workspace); err != nil {
 		return err
 	}
 
@@ -73,7 +84,7 @@ func runEdit(ctx context.Context, opts *EditOptions) error {
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

@@ -7,8 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type editOptions struct {
@@ -96,13 +97,13 @@ func runEdit(opts *editOptions) error {
 	}
 
 	// Resolve repository
-	workspace, repoSlug, err := parseRepository(opts.repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.repo)
 	if err != nil {
 		return err
 	}
 
 	// Get authenticated client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

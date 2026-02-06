@@ -10,8 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/config"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type diffOptions struct {
@@ -59,12 +60,12 @@ func runDiff(opts *diffOptions, args []string) error {
 		return err
 	}
 
-	workspace, repoSlug, err := parseRepository(opts.repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.repo)
 	if err != nil {
 		return err
 	}
 
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
@@ -72,7 +73,7 @@ func runDiff(opts *diffOptions, args []string) error {
 	ctx := context.Background()
 
 	// Get the PR to get the diff link
-	pr, err := getPullRequest(ctx, client, workspace, repoSlug, prNum)
+	pr, err := client.GetPullRequest(ctx, workspace, repoSlug, int64(prNum))
 	if err != nil {
 		return fmt.Errorf("failed to get pull request: %w", err)
 	}

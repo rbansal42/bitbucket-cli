@@ -8,9 +8,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/browser"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/browser"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // ViewOptions holds the options for the view command
@@ -64,13 +65,13 @@ You can specify a pipeline by its build number or UUID.`,
 
 func runView(ctx context.Context, opts *ViewOptions) error {
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
 
 	// Parse repository
-	workspace, repoSlug, err := parseRepository(opts.Repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.Repo)
 	if err != nil {
 		return err
 	}
@@ -112,8 +113,6 @@ func runView(ctx context.Context, opts *ViewOptions) error {
 	// Display formatted output
 	return displayPipeline(opts.Streams, pipeline, steps)
 }
-
-
 
 func getPipelineWebURL(workspace, repoSlug string, buildNumber int) string {
 	return fmt.Sprintf("https://bitbucket.org/%s/%s/pipelines/results/%d",
@@ -228,9 +227,9 @@ func displayPipeline(streams *iostreams.IOStreams, pipeline *api.Pipeline, steps
 	}
 
 	// Timestamps
-	fmt.Fprintf(streams.Out, "Started:   %s\n", formatTimeAgo(pipeline.CreatedOn))
+	fmt.Fprintf(streams.Out, "Started:   %s\n", cmdutil.TimeAgo(pipeline.CreatedOn))
 	if pipeline.CompletedOn != nil && !pipeline.CompletedOn.IsZero() {
-		fmt.Fprintf(streams.Out, "Completed: %s\n", formatTimeAgo(*pipeline.CompletedOn))
+		fmt.Fprintf(streams.Out, "Completed: %s\n", cmdutil.TimeAgo(*pipeline.CompletedOn))
 	}
 
 	// Steps summary

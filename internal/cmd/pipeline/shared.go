@@ -2,69 +2,14 @@ package pipeline
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/config"
-	"github.com/rbansal42/bb/internal/git"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
-
-// getAPIClient creates an authenticated API client
-func getAPIClient() (*api.Client, error) {
-	hosts, err := config.LoadHostsConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load hosts config: %w", err)
-	}
-
-	user := hosts.GetActiveUser(config.DefaultHost)
-	if user == "" {
-		return nil, fmt.Errorf("not logged in. Run 'bb auth login' to authenticate")
-	}
-
-	tokenData, _, err := config.GetTokenFromEnvOrKeyring(config.DefaultHost, user)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get token: %w", err)
-	}
-
-	// Try to parse as JSON (OAuth token) or use as plain token
-	var tokenResp struct {
-		AccessToken string `json:"access_token"`
-	}
-	token := tokenData
-	if err := json.Unmarshal([]byte(tokenData), &tokenResp); err == nil && tokenResp.AccessToken != "" {
-		token = tokenResp.AccessToken
-	}
-
-	return api.NewClient(api.WithToken(token)), nil
-}
-
-// parseRepository parses a repository string or detects from git remote
-func parseRepository(repoFlag string) (workspace, repoSlug string, err error) {
-	if repoFlag != "" {
-		parts := strings.SplitN(repoFlag, "/", 2)
-		if len(parts) != 2 {
-			return "", "", fmt.Errorf("invalid repository format: %s (expected workspace/repo)", repoFlag)
-		}
-		// Validate both parts are non-empty
-		if parts[0] == "" || parts[1] == "" {
-			return "", "", fmt.Errorf("invalid repository format: %s (workspace and repo cannot be empty)", repoFlag)
-		}
-		return parts[0], parts[1], nil
-	}
-
-	// Detect from git
-	remote, err := git.GetDefaultRemote()
-	if err != nil {
-		return "", "", fmt.Errorf("could not detect repository: %w\nUse --repo WORKSPACE/REPO to specify", err)
-	}
-
-	return remote.Workspace, remote.RepoSlug, nil
-}
 
 // parsePipelineIdentifier parses a pipeline build number or UUID from args
 func parsePipelineIdentifier(args []string) (string, error) {
@@ -151,61 +96,6 @@ func formatDuration(seconds int) string {
 		return fmt.Sprintf("%dm %ds", minutes, secs)
 	}
 	return fmt.Sprintf("%ds", secs)
-}
-
-// formatTimeAgo formats a time as a human-readable relative time
-func formatTimeAgo(t time.Time) string {
-	if t.IsZero() {
-		return "-"
-	}
-
-	duration := time.Since(t)
-
-	switch {
-	case duration < time.Minute:
-		return "just now"
-	case duration < time.Hour:
-		mins := int(duration.Minutes())
-		if mins == 1 {
-			return "1 minute ago"
-		}
-		return fmt.Sprintf("%d minutes ago", mins)
-	case duration < 24*time.Hour:
-		hours := int(duration.Hours())
-		if hours == 1 {
-			return "1 hour ago"
-		}
-		return fmt.Sprintf("%d hours ago", hours)
-	case duration < 30*24*time.Hour:
-		days := int(duration.Hours() / 24)
-		if days == 1 {
-			return "1 day ago"
-		}
-		return fmt.Sprintf("%d days ago", days)
-	case duration < 365*24*time.Hour:
-		months := int(duration.Hours() / 24 / 30)
-		if months == 1 {
-			return "1 month ago"
-		}
-		return fmt.Sprintf("%d months ago", months)
-	default:
-		years := int(duration.Hours() / 24 / 365)
-		if years == 1 {
-			return "1 year ago"
-		}
-		return fmt.Sprintf("%d years ago", years)
-	}
-}
-
-// truncateString truncates a string to a maximum length
-func truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return s[:maxLen]
-	}
-	return s[:maxLen-3] + "..."
 }
 
 // getCommitShort returns the first 7 characters of a commit hash

@@ -12,9 +12,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/browser"
-	"github.com/rbansal42/bb/internal/git"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/browser"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/git"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type viewOptions struct {
@@ -86,13 +88,13 @@ You can specify a pull request by number, URL, or branch name.`,
 func runView(opts *viewOptions) error {
 	// Resolve repository
 	var err error
-	opts.workspace, opts.repoSlug, err = parseRepository(opts.repo)
+	opts.workspace, opts.repoSlug, err = cmdutil.ParseRepository(opts.repo)
 	if err != nil {
 		return err
 	}
 
 	// Get authenticated client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
@@ -107,7 +109,7 @@ func runView(opts *viewOptions) error {
 	}
 
 	// Fetch PR details
-	pr, err := getPullRequest(ctx, client, opts.workspace, opts.repoSlug, prNumber)
+	pr, err := client.GetPullRequest(ctx, opts.workspace, opts.repoSlug, int64(prNumber))
 	if err != nil {
 		return err
 	}
@@ -167,7 +169,7 @@ func extractPRNumberFromURL(urlStr string) (int, error) {
 
 // findPRForBranch finds an open PR for the given source branch
 func findPRForBranch(ctx context.Context, workspace, repoSlug, branch string) (int, error) {
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return 0, err
 	}
@@ -184,8 +186,8 @@ func findPRForBranch(ctx context.Context, workspace, repoSlug, branch string) (i
 	}
 
 	var result struct {
-		Values []PullRequest `json:"values"`
-		Size   int           `json:"size"`
+		Values []api.PullRequest `json:"values"`
+		Size   int               `json:"size"`
 	}
 	if err := json.Unmarshal(resp.Body, &result); err != nil {
 		return 0, fmt.Errorf("failed to parse response: %w", err)
@@ -195,25 +197,20 @@ func findPRForBranch(ctx context.Context, workspace, repoSlug, branch string) (i
 		return 0, fmt.Errorf("no open pull request found for branch %q", branch)
 	}
 
-	return result.Values[0].ID, nil
+	return int(result.Values[0].ID), nil
 }
 
-func outputJSON(streams *iostreams.IOStreams, pr *PullRequest) error {
-	data, err := json.MarshalIndent(pr, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+func outputJSON(streams *iostreams.IOStreams, pr *api.PullRequest) error {
+	return cmdutil.PrintJSON(streams, pr)
 }
 
-func displayPR(streams *iostreams.IOStreams, pr *PullRequest) error {
+func displayPR(streams *iostreams.IOStreams, pr *api.PullRequest) error {
 	// Title and state
 	fmt.Fprintf(streams.Out, "Title: %s\n", pr.Title)
-	fmt.Fprintf(streams.Out, "State: %s\n", strings.ToUpper(pr.State))
+	fmt.Fprintf(streams.Out, "State: %s\n", strings.ToUpper(string(pr.State)))
 
 	// Author
-	authorName := getUserDisplayName(pr.Author)
+	authorName := cmdutil.GetUserDisplayName(&pr.Author)
 	fmt.Fprintf(streams.Out, "Author: %s\n", authorName)
 
 	// Description
@@ -230,7 +227,7 @@ func displayPR(streams *iostreams.IOStreams, pr *PullRequest) error {
 		fmt.Fprintln(streams.Out, "Reviewers:")
 		for _, p := range pr.Participants {
 			if p.Role == "REVIEWER" {
-				name := getUserDisplayName(p.User)
+				name := cmdutil.GetUserDisplayName(&p.User)
 				status := "pending"
 				if p.Approved {
 					status = "approved"
@@ -252,64 +249,7 @@ func displayPR(streams *iostreams.IOStreams, pr *PullRequest) error {
 	fmt.Fprintf(streams.Out, "Comments: %d\n", pr.CommentCount)
 
 	// Created date
-	createdAt, err := time.Parse(time.RFC3339, pr.CreatedOn)
-	if err == nil {
-		fmt.Fprintf(streams.Out, "Created: %s\n", timeAgo(createdAt))
-	}
+	fmt.Fprintf(streams.Out, "Created: %s\n", cmdutil.TimeAgo(pr.CreatedOn))
 
 	return nil
-}
-
-// getUserDisplayName returns the best available display name for a user
-func getUserDisplayName(user PRUser) string {
-	if user.DisplayName != "" {
-		return user.DisplayName
-	}
-	if user.Username != "" {
-		return user.Username
-	}
-	if user.Nickname != "" {
-		return user.Nickname
-	}
-	return "unknown"
-}
-
-// timeAgo returns a human-readable relative time string
-func timeAgo(t time.Time) string {
-	duration := time.Since(t)
-
-	switch {
-	case duration < time.Minute:
-		return "just now"
-	case duration < time.Hour:
-		mins := int(duration.Minutes())
-		if mins == 1 {
-			return "1 minute ago"
-		}
-		return fmt.Sprintf("%d minutes ago", mins)
-	case duration < 24*time.Hour:
-		hours := int(duration.Hours())
-		if hours == 1 {
-			return "1 hour ago"
-		}
-		return fmt.Sprintf("%d hours ago", hours)
-	case duration < 30*24*time.Hour:
-		days := int(duration.Hours() / 24)
-		if days == 1 {
-			return "1 day ago"
-		}
-		return fmt.Sprintf("%d days ago", days)
-	case duration < 365*24*time.Hour:
-		months := int(duration.Hours() / 24 / 30)
-		if months == 1 {
-			return "1 month ago"
-		}
-		return fmt.Sprintf("%d months ago", months)
-	default:
-		years := int(duration.Hours() / 24 / 365)
-		if years == 1 {
-			return "1 year ago"
-		}
-		return fmt.Sprintf("%d years ago", years)
-	}
 }

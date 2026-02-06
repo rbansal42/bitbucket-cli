@@ -2,16 +2,15 @@ package branch
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strings"
 	"text/tabwriter"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // ListOptions holds the options for the list command
@@ -61,13 +60,13 @@ Use the --repo flag to specify a different repository.`,
 
 func runList(ctx context.Context, opts *ListOptions) error {
 	// Parse repository
-	workspace, repoSlug, err := parseRepository(opts.Repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.Repo)
 	if err != nil {
 		return err
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
@@ -114,13 +113,7 @@ func outputListJSON(streams *iostreams.IOStreams, branches []api.BranchFull) err
 		output[i] = item
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputTable(streams *iostreams.IOStreams, branches []api.BranchFull) error {
@@ -128,11 +121,7 @@ func outputTable(streams *iostreams.IOStreams, branches []api.BranchFull) error 
 
 	// Print header
 	header := "NAME\tCOMMIT\tMESSAGE"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, branch := range branches {
@@ -148,31 +137,11 @@ func outputTable(streams *iostreams.IOStreams, branches []api.BranchFull) error 
 				commit = branch.Target.Hash
 			}
 			// Truncate message to 50 chars and replace newlines
-			message = truncateMessage(branch.Target.Message, 50)
+			message = cmdutil.TruncateString(branch.Target.Message, 50)
 		}
 
 		fmt.Fprintf(w, "%s\t%s\t%s\n", name, commit, message)
 	}
 
 	return w.Flush()
-}
-
-// truncateMessage truncates a message to maxLen characters and replaces newlines
-func truncateMessage(s string, maxLen int) string {
-	// Replace newlines with spaces
-	s = strings.ReplaceAll(s, "\n", " ")
-	s = strings.ReplaceAll(s, "\r", " ")
-	// Collapse multiple spaces
-	for strings.Contains(s, "  ") {
-		s = strings.ReplaceAll(s, "  ", " ")
-	}
-	s = strings.TrimSpace(s)
-
-	if len(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return s[:maxLen]
-	}
-	return s[:maxLen-3] + "..."
 }

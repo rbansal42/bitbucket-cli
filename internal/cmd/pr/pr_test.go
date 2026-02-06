@@ -2,6 +2,9 @@ package pr
 
 import (
 	"testing"
+
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
 )
 
 func TestParsePRNumber(t *testing.T) {
@@ -153,15 +156,15 @@ func TestParseRepository(t *testing.T) {
 			wantErr:  true, // empty repo is invalid
 		},
 		{
-			name:          "empty flag falls back to git detection",
-			repoFlag:      "",
-			wantErr:       true, // Will error in test environment without git
+			name:     "empty flag falls back to git detection",
+			repoFlag: "",
+			wantErr:  true, // Will error in test environment without git
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			workspace, repo, err := parseRepository(tt.repoFlag)
+			workspace, repo, err := cmdutil.ParseRepository(tt.repoFlag)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseRepository() error = %v, wantErr %v", err, tt.wantErr)
@@ -187,7 +190,7 @@ func TestGetEditor(t *testing.T) {
 	// Test that getEditor returns a non-empty string
 	// The actual value depends on environment variables
 	editor := getEditor()
-	
+
 	if editor == "" {
 		t.Error("getEditor() returned empty string")
 	}
@@ -200,7 +203,7 @@ func TestGetEditorPriority(t *testing.T) {
 	// Store original values
 	// Note: In a real test, we'd use t.Setenv() which automatically restores
 	// For now, just test that the function returns a non-empty value
-	
+
 	editor := getEditor()
 	if editor == "" {
 		t.Error("expected non-empty editor")
@@ -209,12 +212,12 @@ func TestGetEditorPriority(t *testing.T) {
 
 // TestPullRequestTypes verifies the PR types can be used correctly
 func TestPullRequestTypes(t *testing.T) {
-	// Test that PullRequest struct can be instantiated
-	pr := PullRequest{
+	// Test that api.PullRequest struct can be instantiated
+	pr := api.PullRequest{
 		ID:          1,
 		Title:       "Test PR",
 		Description: "Test description",
-		State:       "OPEN",
+		State:       api.PRStateOpen,
 	}
 
 	if pr.ID != 1 {
@@ -237,9 +240,9 @@ func TestPullRequestTypes(t *testing.T) {
 	}
 }
 
-// TestPRCommentTypes verifies the PRComment struct
+// TestPRCommentTypes verifies the api.PRComment struct
 func TestPRCommentTypes(t *testing.T) {
-	comment := PRComment{
+	comment := api.PRComment{
 		ID: 42,
 	}
 	comment.Content.Raw = "This is a comment"
@@ -261,9 +264,9 @@ func TestPRCommentTypes(t *testing.T) {
 // TestParsePRNumberErrorMessages verifies error message quality
 func TestParsePRNumberErrorMessages(t *testing.T) {
 	tests := []struct {
-		name        string
-		args        []string
-		wantErrMsg  string
+		name       string
+		args       []string
+		wantErrMsg string
 	}{
 		{
 			name:       "empty args error message",
@@ -293,7 +296,7 @@ func TestParsePRNumberErrorMessages(t *testing.T) {
 
 // TestParseRepositoryErrorMessages verifies error message quality
 func TestParseRepositoryErrorMessages(t *testing.T) {
-	_, _, err := parseRepository("invalid-format")
+	_, _, err := cmdutil.ParseRepository("invalid-format")
 	if err == nil {
 		t.Fatal("expected error but got nil")
 	}

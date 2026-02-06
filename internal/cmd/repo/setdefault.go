@@ -14,8 +14,9 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/rbansal42/bb/internal/git"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/git"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // LocalConfig represents the .bb.yml file structure
@@ -95,7 +96,7 @@ func runSetDefault(ctx context.Context, opts *SetDefaultOptions) error {
 
 	if opts.RepoArg != "" {
 		// Parse provided argument
-		workspace, repoSlug, err = parseRepoArg(opts.RepoArg)
+		workspace, repoSlug, err = cmdutil.ParseRepository(opts.RepoArg)
 		if err != nil {
 			return err
 		}
@@ -126,7 +127,7 @@ func runSetDefault(ctx context.Context, opts *SetDefaultOptions) error {
 	fullRepo := fmt.Sprintf("%s/%s", workspace, repoSlug)
 
 	// Try to validate repository exists if authenticated
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err == nil {
 		validateCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()

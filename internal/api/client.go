@@ -28,6 +28,8 @@ type Client struct {
 	baseURL    string
 	httpClient *http.Client
 	token      string
+	username   string // For Basic Auth with API tokens
+	apiToken   string // For Basic Auth with API tokens
 }
 
 // ClientOption is a functional option for configuring the client
@@ -49,10 +51,19 @@ func NewClient(opts ...ClientOption) *Client {
 	return c
 }
 
-// WithToken sets the authentication token
+// WithToken sets the authentication token (Bearer token for OAuth/Access Tokens)
 func WithToken(token string) ClientOption {
 	return func(c *Client) {
 		c.token = token
+	}
+}
+
+// WithBasicAuth sets username and API token for Basic Auth
+// Used with Atlassian API tokens (email:api_token)
+func WithBasicAuth(username, apiToken string) ClientOption {
+	return func(c *Client) {
+		c.username = username
+		c.apiToken = apiToken
 	}
 }
 
@@ -144,7 +155,12 @@ func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 		httpReq.Header.Set("Content-Type", "application/json")
 	}
 
-	if c.token != "" {
+	// Set authentication
+	if c.username != "" && c.apiToken != "" {
+		// Basic Auth for Atlassian API tokens
+		httpReq.SetBasicAuth(c.username, c.apiToken)
+	} else if c.token != "" {
+		// Bearer token for OAuth or Access Tokens
 		httpReq.Header.Set("Authorization", "Bearer "+c.token)
 	}
 
@@ -257,6 +273,7 @@ type User struct {
 	UUID        string `json:"uuid"`
 	Username    string `json:"username"`
 	DisplayName string `json:"display_name"`
+	Nickname    string `json:"nickname"`
 	AccountID   string `json:"account_id"`
 	Links       struct {
 		Avatar struct {

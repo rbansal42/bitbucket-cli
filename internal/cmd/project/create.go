@@ -8,8 +8,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type createOptions struct {
@@ -47,7 +49,13 @@ identifier (e.g., "PROJ", "DEV", "CORE").`,
   bb project create -w myworkspace -k CORE -n "Core" --json`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.workspace == "" {
-				return fmt.Errorf("workspace is required. Use --workspace or -w to specify")
+				defaultWs, err := config.GetDefaultWorkspace()
+				if err == nil && defaultWs != "" {
+					opts.workspace = defaultWs
+				}
+			}
+			if opts.workspace == "" {
+				return fmt.Errorf("workspace is required. Use --workspace or -w to specify, or set a default with 'bb workspace set-default'")
 			}
 			if opts.key == "" {
 				return fmt.Errorf("project key is required. Use --key or -k to specify")
@@ -72,7 +80,7 @@ identifier (e.g., "PROJ", "DEV", "CORE").`,
 
 func runCreate(ctx context.Context, opts *createOptions) error {
 	// Get authenticated client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

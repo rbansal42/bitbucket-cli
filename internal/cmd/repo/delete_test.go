@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
 )
 
 func TestParseRepoArg(t *testing.T) {
@@ -59,10 +61,10 @@ func TestParseRepoArg(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			workspace, repo, err := parseRepoArg(tt.arg)
+			workspace, repo, err := cmdutil.ParseRepository(tt.arg)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("parseRepoArg() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParseRepository() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
@@ -71,11 +73,11 @@ func TestParseRepoArg(t *testing.T) {
 			}
 
 			if workspace != tt.wantWorkspace {
-				t.Errorf("parseRepoArg() workspace = %v, want %v", workspace, tt.wantWorkspace)
+				t.Errorf("ParseRepository() workspace = %v, want %v", workspace, tt.wantWorkspace)
 			}
 
 			if repo != tt.wantRepo {
-				t.Errorf("parseRepoArg() repo = %v, want %v", repo, tt.wantRepo)
+				t.Errorf("ParseRepository() repo = %v, want %v", repo, tt.wantRepo)
 			}
 		})
 	}
@@ -101,7 +103,7 @@ func TestGetRepoName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, repo, err := parseRepoArg(tt.input)
+			_, repo, err := cmdutil.ParseRepository(tt.input)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

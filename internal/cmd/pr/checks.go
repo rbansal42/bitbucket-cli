@@ -10,8 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // ChecksOptions holds the options for the checks command
@@ -63,13 +64,13 @@ associated with the pull request.`,
 
 func runChecks(ctx context.Context, opts *ChecksOptions) error {
 	// Parse repository
-	workspace, repoSlug, err := parseRepository(opts.Repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.Repo)
 	if err != nil {
 		return err
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
@@ -138,7 +139,7 @@ func outputChecksTable(streams *iostreams.IOStreams, statuses []api.CommitStatus
 		if name == "" {
 			name = s.Key
 		}
-		desc := truncateString(s.Description, 50)
+		desc := cmdutil.TruncateString(s.Description, 50)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\n", status, name, desc)
 	}

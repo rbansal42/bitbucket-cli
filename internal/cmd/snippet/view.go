@@ -10,9 +10,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/browser"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/browser"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // ViewOptions holds the options for the view command
@@ -53,24 +55,33 @@ By default, shows snippet metadata. Use --raw to view file contents.`,
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.Workspace, "workspace", "w", "", "Workspace slug (required)")
+	cmd.Flags().StringVarP(&opts.Workspace, "workspace", "w", "", "Workspace slug (uses default workspace if not specified)")
 	cmd.Flags().BoolVar(&opts.Web, "web", false, "Open snippet in browser")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 	cmd.Flags().BoolVar(&opts.Raw, "raw", false, "Show raw file contents")
-
-	cmd.MarkFlagRequired("workspace")
 
 	return cmd
 }
 
 func runView(ctx context.Context, opts *ViewOptions) error {
+	// Fall back to default workspace if not specified
+	if opts.Workspace == "" {
+		defaultWs, err := config.GetDefaultWorkspace()
+		if err == nil && defaultWs != "" {
+			opts.Workspace = defaultWs
+		}
+	}
+	if opts.Workspace == "" {
+		return fmt.Errorf("workspace is required. Use --workspace or -w to specify, or set a default with 'bb workspace set-default'")
+	}
+
 	// Validate workspace
-	if err := parseWorkspace(opts.Workspace); err != nil {
+	if _, err := cmdutil.ParseWorkspace(opts.Workspace); err != nil {
 		return err
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

@@ -2,15 +2,16 @@ package snippet
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"text/tabwriter"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // ListOptions holds the options for the list command
@@ -51,12 +52,10 @@ Snippets are workspace-scoped and can be filtered by your role.`,
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.Workspace, "workspace", "w", "", "Workspace slug (required)")
+	cmd.Flags().StringVarP(&opts.Workspace, "workspace", "w", "", "Workspace slug (uses default if set)")
 	cmd.Flags().StringVar(&opts.Role, "role", "", "Filter by role: owner, contributor, member")
 	cmd.Flags().IntVarP(&opts.Limit, "limit", "l", 30, "Maximum number of snippets to list")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
-
-	cmd.MarkFlagRequired("workspace")
 
 	return cmd
 }
@@ -69,8 +68,19 @@ var validRoles = map[string]bool{
 }
 
 func runList(ctx context.Context, opts *ListOptions) error {
+	// Fall back to default workspace if not specified
+	if opts.Workspace == "" {
+		defaultWs, err := config.GetDefaultWorkspace()
+		if err == nil && defaultWs != "" {
+			opts.Workspace = defaultWs
+		}
+	}
+	if opts.Workspace == "" {
+		return fmt.Errorf("workspace is required. Use --workspace or -w to specify, or set a default with 'bb workspace set-default'")
+	}
+
 	// Validate workspace
-	if err := parseWorkspace(opts.Workspace); err != nil {
+	if _, err := cmdutil.ParseWorkspace(opts.Workspace); err != nil {
 		return err
 	}
 
@@ -80,7 +90,7 @@ func runList(ctx context.Context, opts *ListOptions) error {
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
@@ -129,13 +139,7 @@ func outputListJSON(streams *iostreams.IOStreams, snippets []api.Snippet) error 
 		}
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputListTable(streams *iostreams.IOStreams, snippets []api.Snippet) error {
@@ -143,16 +147,12 @@ func outputListTable(streams *iostreams.IOStreams, snippets []api.Snippet) error
 
 	// Print header
 	header := "ID\tTITLE\tVISIBILITY\tUPDATED"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, snippet := range snippets {
 		id := fmt.Sprintf("%d", snippet.ID)
-		title := truncateString(snippet.Title, 40)
+		title := cmdutil.TruncateString(snippet.Title, 40)
 		if title == "" {
 			title = "(untitled)"
 		}
@@ -162,53 +162,10 @@ func outputListTable(streams *iostreams.IOStreams, snippets []api.Snippet) error
 			visibility = "private"
 		}
 
-		updated := formatTime(snippet.UpdatedOn)
+		updated := cmdutil.TimeAgoFromString(snippet.UpdatedOn)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", id, title, visibility, updated)
 	}
 
 	return w.Flush()
-}
-
-// formatTime formats an ISO 8601 timestamp to a human-readable format
-func formatTime(isoTime string) string {
-	if isoTime == "" {
-		return ""
-	}
-
-	t, err := time.Parse(time.RFC3339, isoTime)
-	if err != nil {
-		// Try alternative format
-		t, err = time.Parse("2006-01-02T15:04:05.000000-07:00", isoTime)
-		if err != nil {
-			return isoTime
-		}
-	}
-
-	// Format as relative time or date
-	now := time.Now()
-	diff := now.Sub(t)
-
-	switch {
-	case diff < time.Hour:
-		mins := int(diff.Minutes())
-		if mins <= 1 {
-			return "just now"
-		}
-		return fmt.Sprintf("%dm ago", mins)
-	case diff < 24*time.Hour:
-		hours := int(diff.Hours())
-		if hours == 1 {
-			return "1 hour ago"
-		}
-		return fmt.Sprintf("%d hours ago", hours)
-	case diff < 7*24*time.Hour:
-		days := int(diff.Hours() / 24)
-		if days == 1 {
-			return "yesterday"
-		}
-		return fmt.Sprintf("%d days ago", days)
-	default:
-		return t.Format("Jan 2, 2006")
-	}
 }

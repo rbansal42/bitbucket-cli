@@ -2,15 +2,15 @@ package pipeline
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"text/tabwriter"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // ListOptions holds the options for the list command
@@ -70,13 +70,13 @@ by pipeline status (PENDING, IN_PROGRESS, COMPLETED, FAILED, etc.).`,
 
 func runList(ctx context.Context, opts *ListOptions) error {
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
 
 	// Parse repository
-	workspace, repoSlug, err := parseRepository(opts.Repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.Repo)
 	if err != nil {
 		return err
 	}
@@ -168,13 +168,7 @@ func outputListJSON(streams *iostreams.IOStreams, pipelines []api.Pipeline) erro
 		}
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputListTable(streams *iostreams.IOStreams, pipelines []api.Pipeline) error {
@@ -182,11 +176,7 @@ func outputListTable(streams *iostreams.IOStreams, pipelines []api.Pipeline) err
 
 	// Print header
 	header := "#\tSTATUS\tBRANCH\tCOMMIT\tTRIGGER\tDURATION\tSTARTED"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, p := range pipelines {
@@ -196,7 +186,7 @@ func outputListTable(streams *iostreams.IOStreams, pipelines []api.Pipeline) err
 		branch := "-"
 		commit := "-"
 		if p.Target != nil {
-			branch = truncateString(p.Target.RefName, 25)
+			branch = cmdutil.TruncateString(p.Target.RefName, 25)
 			if p.Target.Commit != nil {
 				commit = getCommitShort(p.Target.Commit.Hash)
 			}
@@ -204,7 +194,7 @@ func outputListTable(streams *iostreams.IOStreams, pipelines []api.Pipeline) err
 
 		trigger := getTriggerType(p.Trigger)
 		duration := formatDuration(p.BuildSecondsUsed)
-		started := formatTimeAgo(p.CreatedOn)
+		started := cmdutil.TimeAgo(p.CreatedOn)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			buildNum, status, branch, commit, trigger, duration, started)

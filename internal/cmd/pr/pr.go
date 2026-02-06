@@ -3,7 +3,7 @@ package pr
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // NewCmdPR creates the pr command and its subcommands

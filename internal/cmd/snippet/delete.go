@@ -10,7 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // DeleteOptions holds the options for the delete command
@@ -48,18 +50,27 @@ Use --force to skip the confirmation prompt.`,
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.Workspace, "workspace", "w", "", "Workspace slug (required)")
+	cmd.Flags().StringVarP(&opts.Workspace, "workspace", "w", "", "Workspace slug")
 	cmd.Flags().BoolVarP(&opts.Force, "force", "f", false, "Skip confirmation prompt")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
-
-	cmd.MarkFlagRequired("workspace")
 
 	return cmd
 }
 
 func runDelete(ctx context.Context, opts *DeleteOptions) error {
+	// Fall back to default workspace if not specified
+	if opts.Workspace == "" {
+		defaultWs, err := config.GetDefaultWorkspace()
+		if err == nil && defaultWs != "" {
+			opts.Workspace = defaultWs
+		}
+	}
+	if opts.Workspace == "" {
+		return fmt.Errorf("workspace is required. Use --workspace or -w to specify, or set a default with 'bb workspace set-default'")
+	}
+
 	// Validate workspace
-	if err := parseWorkspace(opts.Workspace); err != nil {
+	if _, err := cmdutil.ParseWorkspace(opts.Workspace); err != nil {
 		return err
 	}
 
@@ -86,7 +97,7 @@ func runDelete(ctx context.Context, opts *DeleteOptions) error {
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

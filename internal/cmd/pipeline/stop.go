@@ -11,7 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type stopOptions struct {
@@ -59,7 +60,7 @@ You will be prompted to confirm the stop action unless the --yes flag is provide
 
 func runPipelineStop(opts *stopOptions) error {
 	// Resolve repository
-	workspace, repoSlug, err := parseRepository(opts.repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.repo)
 	if err != nil {
 		return err
 	}
@@ -71,7 +72,7 @@ func runPipelineStop(opts *stopOptions) error {
 	}
 
 	// Get authenticated client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

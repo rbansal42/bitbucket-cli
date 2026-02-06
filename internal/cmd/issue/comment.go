@@ -6,7 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type commentOptions struct {
@@ -48,7 +49,7 @@ func runComment(opts *commentOptions, args []string) error {
 		return err
 	}
 
-	workspace, repoSlug, err := parseRepository(opts.repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.repo)
 	if err != nil {
 		return err
 	}
@@ -58,7 +59,7 @@ func runComment(opts *commentOptions, args []string) error {
 		return fmt.Errorf("comment body required, use --body flag")
 	}
 
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

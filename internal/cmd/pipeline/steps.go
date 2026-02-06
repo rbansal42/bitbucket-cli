@@ -9,8 +9,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // StepsOptions holds the options for the steps command
@@ -59,13 +60,13 @@ that step's logs.`,
 
 func runSteps(ctx context.Context, opts *StepsOptions, pipelineArg string) error {
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
 
 	// Parse repository
-	workspace, repoSlug, err := parseRepository(opts.Repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.Repo)
 	if err != nil {
 		return err
 	}
@@ -98,8 +99,6 @@ func runSteps(ctx context.Context, opts *StepsOptions, pipelineArg string) error
 
 	return outputStepsTable(opts.Streams, result.Values)
 }
-
-
 
 func outputStepsJSON(streams *iostreams.IOStreams, steps []api.PipelineStep) error {
 	output := make([]map[string]interface{}, len(steps))
@@ -154,7 +153,7 @@ func outputStepsTable(streams *iostreams.IOStreams, steps []api.PipelineStep) er
 		if name == "" {
 			name = "(unnamed)"
 		}
-		name = truncateString(name, 40)
+		name = cmdutil.TruncateString(name, 40)
 		status := formatStepStatus(streams, step.State)
 		duration := formatStepDuration(step.StartedOn, step.CompletedOn)
 

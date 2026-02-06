@@ -10,8 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/git"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/git"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type checkoutOptions struct {
@@ -68,7 +69,7 @@ use --force to overwrite it.`,
 
 func runCheckout(opts *checkoutOptions) error {
 	// Resolve repository
-	workspace, repoSlug, err := parseRepository(opts.repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.repo)
 	if err != nil {
 		return err
 	}
@@ -76,7 +77,7 @@ func runCheckout(opts *checkoutOptions) error {
 	opts.streams.Info("Fetching pull request #%d...", opts.prNumber)
 
 	// Get authenticated API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
@@ -85,7 +86,7 @@ func runCheckout(opts *checkoutOptions) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	pr, err := getPullRequest(ctx, client, workspace, repoSlug, opts.prNumber)
+	pr, err := client.GetPullRequest(ctx, workspace, repoSlug, int64(opts.prNumber))
 	if err != nil {
 		return fmt.Errorf("failed to get pull request: %w", err)
 	}

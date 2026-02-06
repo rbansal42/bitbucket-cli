@@ -8,9 +8,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/browser"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/browser"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type viewOptions struct {
@@ -47,7 +49,13 @@ short uppercase identifiers like "PROJ" or "DEV".`,
 			opts.key = args[0]
 
 			if opts.workspace == "" {
-				return fmt.Errorf("workspace is required. Use --workspace or -w to specify")
+				defaultWs, err := config.GetDefaultWorkspace()
+				if err == nil && defaultWs != "" {
+					opts.workspace = defaultWs
+				}
+			}
+			if opts.workspace == "" {
+				return fmt.Errorf("workspace is required. Use --workspace or -w to specify, or set a default with 'bb workspace set-default'")
 			}
 
 			return runView(cmd.Context(), opts)
@@ -63,7 +71,7 @@ short uppercase identifiers like "PROJ" or "DEV".`,
 
 func runView(ctx context.Context, opts *viewOptions) error {
 	// Get authenticated client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

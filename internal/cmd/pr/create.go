@@ -13,10 +13,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/browser"
-	"github.com/rbansal42/bb/internal/git"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/browser"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/git"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type createOptions struct {
@@ -87,7 +88,7 @@ If --body is not provided, an editor will open for you to write the description.
 
 func runCreate(opts *createOptions) error {
 	// Resolve repository
-	workspace, repoSlug, err := parseRepository(opts.repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.repo)
 	if err != nil {
 		return err
 	}
@@ -106,7 +107,7 @@ func runCreate(opts *createOptions) error {
 	}
 
 	// Get authenticated client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

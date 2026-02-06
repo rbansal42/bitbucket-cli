@@ -9,9 +9,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/config"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type statusOptions struct {
@@ -66,17 +66,33 @@ func runStatus(opts *statusOptions) error {
 		return nil
 	}
 
-	// Try to parse as JSON (OAuth token) or use as plain token
-	var token string
-	var tokenResp oauthTokenResponse
-	if err := json.Unmarshal([]byte(tokenData), &tokenResp); err == nil && tokenResp.AccessToken != "" {
-		token = tokenResp.AccessToken
+	// Create API client based on token type
+	var client *api.Client
+	var displayToken string
+
+	if strings.HasPrefix(tokenData, "basic:") {
+		// Basic Auth credentials (email:api_token)
+		credentials := strings.TrimPrefix(tokenData, "basic:")
+		parts := strings.SplitN(credentials, ":", 2)
+		if len(parts) != 2 {
+			opts.streams.Info("%s", opts.hostname)
+			opts.streams.Error("Invalid stored credentials format for %s", user)
+			return nil
+		}
+		client = api.NewClient(api.WithBasicAuth(parts[0], parts[1]))
+		displayToken = parts[1] // Show API token portion
 	} else {
-		token = tokenData
+		// Try to parse as JSON (OAuth token) or use as plain token
+		var tokenResp oauthTokenResponse
+		if err := json.Unmarshal([]byte(tokenData), &tokenResp); err == nil && tokenResp.AccessToken != "" {
+			displayToken = tokenResp.AccessToken
+		} else {
+			displayToken = tokenData
+		}
+		client = api.NewClient(api.WithToken(displayToken))
 	}
 
 	// Validate token by making an API request
-	client := api.NewClient(api.WithToken(token))
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -95,7 +111,7 @@ func runStatus(opts *statusOptions) error {
 	opts.streams.Info("  - Git operations protocol: %s", hosts.GetGitProtocol(opts.hostname))
 
 	// Mask token for display
-	maskedToken := maskToken(token)
+	maskedToken := maskToken(displayToken)
 	opts.streams.Info("  - Token: %s", maskedToken)
 
 	return nil

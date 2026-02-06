@@ -23,8 +23,8 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/rbansal42/bb/internal/cmd.Version={{.Version}}
-      - -X github.com/rbansal42/bb/internal/cmd.BuildDate={{.Date}}
+      - -X github.com/rbansal42/bitbucket-cli/internal/cmd.Version={{.Version}}
+      - -X github.com/rbansal42/bitbucket-cli/internal/cmd.BuildDate={{.Date}}
 
 archives:
   - id: default
@@ -61,23 +61,26 @@ changelog:
 release:
   github:
     owner: rbansal42
-    name: bb
+    name: bitbucket-cli
   draft: false
   prerelease: auto
   mode: replace
   name_template: "v{{.Version}}"
 
+# Homebrew tap configuration
 brews:
   - name: bb
     repository:
       owner: rbansal42
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    folder: Formula
-    homepage: "https://github.com/rbansal42/bb"
+    directory: Formula
+    homepage: "https://github.com/rbansal42/bitbucket-cli"
     description: "Unofficial CLI for Bitbucket Cloud"
     license: "MIT"
     install: |
       bin.install "bb"
     test: |
-      system "#{bin}/bb", "version"
+      system "#{bin}/bb", "--version"
+    # Skip homebrew publish for pre-release versions
+    skip_upload: auto

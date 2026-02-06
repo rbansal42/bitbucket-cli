@@ -11,10 +11,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/config"
-	"github.com/rbansal42/bb/internal/git"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/git"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type createOptions struct {
@@ -102,7 +103,7 @@ a public repository instead.`,
 
 func runCreate(opts *createOptions) error {
 	// Get authenticated client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
@@ -113,9 +114,16 @@ func runCreate(opts *createOptions) error {
 	// Determine workspace
 	workspace := opts.workspace
 	if workspace == "" {
-		workspace, err = getDefaultWorkspace(ctx, client, opts.streams)
-		if err != nil {
-			return fmt.Errorf("could not determine workspace: %w\nUse --workspace to specify", err)
+		// First, try to get the default workspace from config
+		defaultWs, cfgErr := config.GetDefaultWorkspace()
+		if cfgErr == nil && defaultWs != "" {
+			workspace = defaultWs
+		} else {
+			// Fall back to inferring workspace from user
+			workspace, err = getDefaultWorkspace(ctx, client, opts.streams)
+			if err != nil {
+				return fmt.Errorf("could not determine workspace: %w\nUse --workspace to specify or run 'bb workspace set-default' to set a default", err)
+			}
 		}
 	}
 

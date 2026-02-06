@@ -10,9 +10,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/git"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/git"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type mergeOptions struct {
@@ -106,13 +107,13 @@ may not support rebase merge for all repositories).`,
 
 func runMerge(opts *mergeOptions) error {
 	// Resolve repository
-	workspace, repoSlug, err := parseRepository(opts.repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.repo)
 	if err != nil {
 		return err
 	}
 
 	// Get authenticated API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
@@ -135,13 +136,13 @@ func runMerge(opts *mergeOptions) error {
 	}
 
 	// Get PR details
-	pr, err := getPullRequest(ctx, client, workspace, repoSlug, opts.prNumber)
+	pr, err := client.GetPullRequest(ctx, workspace, repoSlug, int64(opts.prNumber))
 	if err != nil {
 		return fmt.Errorf("failed to get pull request: %w", err)
 	}
 
 	// Check PR state
-	if pr.State != "OPEN" {
+	if pr.State != api.PRStateOpen {
 		return fmt.Errorf("pull request #%d is not open (state: %s)", opts.prNumber, pr.State)
 	}
 

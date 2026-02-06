@@ -1,0 +1,13 @@
+.git
+.worktrees
+bin/
+dist/
+cover.out
+*.md
+docs/
+.github/
+Dockerfile
+.dockerignore
+.goreleaser.yml
+Makefile
+*.test

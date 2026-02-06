@@ -2,25 +2,25 @@ package pr
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // ListOptions holds the options for the list command
 type ListOptions struct {
-	State    string
-	Author   string
-	Limit    int
-	JSON     bool
-	Repo     string
-	Streams  *iostreams.IOStreams
+	State   string
+	Author  string
+	Limit   int
+	JSON    bool
+	Repo    string
+	Streams *iostreams.IOStreams
 }
 
 // NewCmdList creates the pr list command
@@ -70,13 +70,13 @@ by state (OPEN, MERGED, DECLINED).`,
 
 func runList(ctx context.Context, opts *ListOptions) error {
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
 
 	// Parse repository
-	workspace, repoSlug, err := parseRepository(opts.Repo)
+	workspace, repoSlug, err := cmdutil.ParseRepository(opts.Repo)
 	if err != nil {
 		return err
 	}
@@ -124,13 +124,7 @@ func outputListJSON(streams *iostreams.IOStreams, prs []api.PullRequest) error {
 		output[i] = api.PullRequestJSON{PullRequest: &prs[i]}
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputTable(streams *iostreams.IOStreams, prs []api.PullRequest) error {
@@ -138,17 +132,13 @@ func outputTable(streams *iostreams.IOStreams, prs []api.PullRequest) error {
 
 	// Print header
 	header := "ID\tTITLE\tBRANCH\tAUTHOR\tSTATUS"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, pr := range prs {
-		title := truncateString(pr.Title, 50)
-		branch := truncateString(pr.Source.Branch.Name, 30)
-		author := truncateString(pr.Author.DisplayName, 20)
+		title := cmdutil.TruncateString(pr.Title, 50)
+		branch := cmdutil.TruncateString(pr.Source.Branch.Name, 30)
+		author := cmdutil.TruncateString(pr.Author.DisplayName, 20)
 		status := formatStatus(streams, string(pr.State))
 
 		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\n",
@@ -173,14 +163,4 @@ func formatStatus(streams *iostreams.IOStreams, state string) string {
 	default:
 		return state
 	}
-}
-
-func truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return s[:maxLen]
-	}
-	return s[:maxLen-3] + "..."
 }

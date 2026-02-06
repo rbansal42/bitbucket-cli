@@ -7,7 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type deleteOptions struct {
@@ -54,7 +55,7 @@ unless the --yes flag is provided.`,
 func runDelete(opts *deleteOptions) error {
 	// Parse the repository argument
 	var err error
-	opts.workspace, opts.repoSlug, err = parseRepoArg(opts.repoArg)
+	opts.workspace, opts.repoSlug, err = cmdutil.ParseRepository(opts.repoArg)
 	if err != nil {
 		return err
 	}
@@ -76,7 +77,7 @@ func runDelete(opts *deleteOptions) error {
 	}
 
 	// Get authenticated client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}

@@ -11,7 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 type cloneOptions struct {
@@ -85,13 +86,13 @@ func runClone(opts *cloneOptions) error {
 		}
 	} else {
 		// Parse workspace/repo format
-		workspace, repoSlug, err := parseRepoArg(opts.repoArg)
+		workspace, repoSlug, err := cmdutil.ParseRepository(opts.repoArg)
 		if err != nil {
 			return err
 		}
 
 		// Get authenticated client
-		client, err := getAPIClient()
+		client, err := cmdutil.GetAPIClient()
 		if err != nil {
 			return err
 		}

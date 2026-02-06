@@ -11,8 +11,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rbansal42/bb/internal/api"
-	"github.com/rbansal42/bb/internal/iostreams"
+	"github.com/rbansal42/bitbucket-cli/internal/api"
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
+	"github.com/rbansal42/bitbucket-cli/internal/config"
+	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
 
 // CreateOptions holds the options for the create command
@@ -55,20 +57,30 @@ If no files are specified, reads from stdin.`,
 	cmd.Flags().StringArrayVarP(&opts.Files, "file", "f", nil, "File to include (can be repeated)")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 
-	cmd.MarkFlagRequired("workspace")
 	cmd.MarkFlagRequired("title")
 
 	return cmd
 }
 
 func runCreate(ctx context.Context, opts *CreateOptions) error {
+	// Fall back to default workspace if not specified
+	if opts.Workspace == "" {
+		defaultWs, err := config.GetDefaultWorkspace()
+		if err == nil && defaultWs != "" {
+			opts.Workspace = defaultWs
+		}
+	}
+	if opts.Workspace == "" {
+		return fmt.Errorf("workspace is required. Use --workspace or -w to specify, or set a default with 'bb workspace set-default'")
+	}
+
 	// Validate workspace
-	if err := parseWorkspace(opts.Workspace); err != nil {
+	if _, err := cmdutil.ParseWorkspace(opts.Workspace); err != nil {
 		return err
 	}
 
 	// Get API client
-	client, err := getAPIClient()
+	client, err := cmdutil.GetAPIClient()
 	if err != nil {
 		return err
 	}
