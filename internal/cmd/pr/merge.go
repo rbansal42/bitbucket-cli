@@ -136,13 +136,13 @@ func runMerge(opts *mergeOptions) error {
 	}
 
 	// Get PR details
-	pr, err := getPullRequest(ctx, client, workspace, repoSlug, opts.prNumber)
+	pr, err := client.GetPullRequest(ctx, workspace, repoSlug, int64(opts.prNumber))
 	if err != nil {
 		return fmt.Errorf("failed to get pull request: %w", err)
 	}
 
 	// Check PR state
-	if pr.State != "OPEN" {
+	if pr.State != api.PRStateOpen {
 		return fmt.Errorf("pull request #%d is not open (state: %s)", opts.prNumber, pr.State)
 	}
 

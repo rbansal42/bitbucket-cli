@@ -2,7 +2,6 @@ package workspace
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"text/tabwriter"
 	"time"
@@ -111,13 +110,7 @@ func outputListJSON(streams *iostreams.IOStreams, memberships []api.WorkspaceMem
 		}
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputListTable(streams *iostreams.IOStreams, memberships []api.WorkspaceMembership) error {
@@ -125,11 +118,7 @@ func outputListTable(streams *iostreams.IOStreams, memberships []api.WorkspaceMe
 
 	// Print header
 	header := "SLUG\tNAME\tROLE"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, m := range memberships {

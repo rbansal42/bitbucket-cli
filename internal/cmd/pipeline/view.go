@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -113,8 +112,6 @@ func runView(ctx context.Context, opts *ViewOptions) error {
 	// Display formatted output
 	return displayPipeline(opts.Streams, pipeline, steps)
 }
-
-
 
 func getPipelineWebURL(workspace, repoSlug string, buildNumber int) string {
 	return fmt.Sprintf("https://bitbucket.org/%s/%s/pipelines/results/%d",
@@ -229,9 +226,9 @@ func displayPipeline(streams *iostreams.IOStreams, pipeline *api.Pipeline, steps
 	}
 
 	// Timestamps
-	fmt.Fprintf(streams.Out, "Started:   %s\n", formatTimeAgo(pipeline.CreatedOn))
+	fmt.Fprintf(streams.Out, "Started:   %s\n", cmdutil.TimeAgo(pipeline.CreatedOn))
 	if pipeline.CompletedOn != nil && !pipeline.CompletedOn.IsZero() {
-		fmt.Fprintf(streams.Out, "Completed: %s\n", formatTimeAgo(*pipeline.CompletedOn))
+		fmt.Fprintf(streams.Out, "Completed: %s\n", cmdutil.TimeAgo(*pipeline.CompletedOn))
 	}
 
 	// Steps summary
@@ -301,12 +298,4 @@ func capitalize(s string) string {
 		return s
 	}
 	return string(s[0]-32) + s[1:]
-}
-
-// formatTimestamp formats a time as a readable timestamp
-func formatTimestamp(t time.Time) string {
-	if t.IsZero() {
-		return "-"
-	}
-	return t.Format("Jan 2, 2006 15:04:05")
 }

@@ -2,10 +2,8 @@ package issue
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"text/tabwriter"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -130,8 +128,8 @@ func outputListJSON(streams *iostreams.IOStreams, issues []api.Issue) error {
 			"state":      issue.State,
 			"kind":       issue.Kind,
 			"priority":   issue.Priority,
-			"reporter":   getUserDisplayName(issue.Reporter),
-			"assignee":   getUserDisplayName(issue.Assignee),
+			"reporter":   cmdutil.GetUserDisplayName(issue.Reporter),
+			"assignee":   cmdutil.GetUserDisplayName(issue.Assignee),
 			"votes":      issue.Votes,
 			"created_on": issue.CreatedOn,
 			"updated_on": issue.UpdatedOn,
@@ -141,13 +139,7 @@ func outputListJSON(streams *iostreams.IOStreams, issues []api.Issue) error {
 		}
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputIssueTable(streams *iostreams.IOStreams, issues []api.Issue) error {
@@ -155,32 +147,21 @@ func outputIssueTable(streams *iostreams.IOStreams, issues []api.Issue) error {
 
 	// Print header
 	header := "#\tTITLE\tSTATE\tKIND\tPRIORITY\tASSIGNEE\tUPDATED"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, issue := range issues {
 		id := fmt.Sprintf("%d", issue.ID)
-		title := truncateString(issue.Title, 40)
+		title := cmdutil.TruncateString(issue.Title, 40)
 		state := formatIssueState(streams, issue.State)
 		kind := formatIssueKind(streams, issue.Kind)
 		priority := formatIssuePriority(streams, issue.Priority)
-		assignee := truncateString(getUserDisplayName(issue.Assignee), 15)
-		updated := formatUpdated(issue.UpdatedOn)
+		assignee := cmdutil.TruncateString(cmdutil.GetUserDisplayName(issue.Assignee), 15)
+		updated := cmdutil.TimeAgo(issue.UpdatedOn)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			id, title, state, kind, priority, assignee, updated)
 	}
 
 	return w.Flush()
-}
-
-func formatUpdated(t time.Time) string {
-	if t.IsZero() {
-		return "-"
-	}
-	return timeAgo(t)
 }

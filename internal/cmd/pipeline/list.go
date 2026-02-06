@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"text/tabwriter"
 	"time"
@@ -169,13 +168,7 @@ func outputListJSON(streams *iostreams.IOStreams, pipelines []api.Pipeline) erro
 		}
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputListTable(streams *iostreams.IOStreams, pipelines []api.Pipeline) error {
@@ -183,11 +176,7 @@ func outputListTable(streams *iostreams.IOStreams, pipelines []api.Pipeline) err
 
 	// Print header
 	header := "#\tSTATUS\tBRANCH\tCOMMIT\tTRIGGER\tDURATION\tSTARTED"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, p := range pipelines {
@@ -197,7 +186,7 @@ func outputListTable(streams *iostreams.IOStreams, pipelines []api.Pipeline) err
 		branch := "-"
 		commit := "-"
 		if p.Target != nil {
-			branch = truncateString(p.Target.RefName, 25)
+			branch = cmdutil.TruncateString(p.Target.RefName, 25)
 			if p.Target.Commit != nil {
 				commit = getCommitShort(p.Target.Commit.Hash)
 			}
@@ -205,7 +194,7 @@ func outputListTable(streams *iostreams.IOStreams, pipelines []api.Pipeline) err
 
 		trigger := getTriggerType(p.Trigger)
 		duration := formatDuration(p.BuildSecondsUsed)
-		started := formatTimeAgo(p.CreatedOn)
+		started := cmdutil.TimeAgo(p.CreatedOn)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			buildNum, status, branch, commit, trigger, duration, started)

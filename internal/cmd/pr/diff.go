@@ -73,7 +73,7 @@ func runDiff(opts *diffOptions, args []string) error {
 	ctx := context.Background()
 
 	// Get the PR to get the diff link
-	pr, err := getPullRequest(ctx, client, workspace, repoSlug, prNum)
+	pr, err := client.GetPullRequest(ctx, workspace, repoSlug, int64(prNum))
 	if err != nil {
 		return fmt.Errorf("failed to get pull request: %w", err)
 	}

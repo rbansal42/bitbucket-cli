@@ -2,9 +2,7 @@ package branch
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -115,13 +113,7 @@ func outputListJSON(streams *iostreams.IOStreams, branches []api.BranchFull) err
 		output[i] = item
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputTable(streams *iostreams.IOStreams, branches []api.BranchFull) error {
@@ -129,11 +121,7 @@ func outputTable(streams *iostreams.IOStreams, branches []api.BranchFull) error 
 
 	// Print header
 	header := "NAME\tCOMMIT\tMESSAGE"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, branch := range branches {
@@ -149,31 +137,11 @@ func outputTable(streams *iostreams.IOStreams, branches []api.BranchFull) error 
 				commit = branch.Target.Hash
 			}
 			// Truncate message to 50 chars and replace newlines
-			message = truncateMessage(branch.Target.Message, 50)
+			message = cmdutil.TruncateString(branch.Target.Message, 50)
 		}
 
 		fmt.Fprintf(w, "%s\t%s\t%s\n", name, commit, message)
 	}
 
 	return w.Flush()
-}
-
-// truncateMessage truncates a message to maxLen characters and replaces newlines
-func truncateMessage(s string, maxLen int) string {
-	// Replace newlines with spaces
-	s = strings.ReplaceAll(s, "\n", " ")
-	s = strings.ReplaceAll(s, "\r", " ")
-	// Collapse multiple spaces
-	for strings.Contains(s, "  ") {
-		s = strings.ReplaceAll(s, "  ", " ")
-	}
-	s = strings.TrimSpace(s)
-
-	if len(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return s[:maxLen]
-	}
-	return s[:maxLen-3] + "..."
 }

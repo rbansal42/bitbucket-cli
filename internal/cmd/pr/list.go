@@ -2,7 +2,6 @@ package pr
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"text/tabwriter"
@@ -16,12 +15,12 @@ import (
 
 // ListOptions holds the options for the list command
 type ListOptions struct {
-	State    string
-	Author   string
-	Limit    int
-	JSON     bool
-	Repo     string
-	Streams  *iostreams.IOStreams
+	State   string
+	Author  string
+	Limit   int
+	JSON    bool
+	Repo    string
+	Streams *iostreams.IOStreams
 }
 
 // NewCmdList creates the pr list command
@@ -125,13 +124,7 @@ func outputListJSON(streams *iostreams.IOStreams, prs []api.PullRequest) error {
 		output[i] = api.PullRequestJSON{PullRequest: &prs[i]}
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputTable(streams *iostreams.IOStreams, prs []api.PullRequest) error {
@@ -139,17 +132,13 @@ func outputTable(streams *iostreams.IOStreams, prs []api.PullRequest) error {
 
 	// Print header
 	header := "ID\tTITLE\tBRANCH\tAUTHOR\tSTATUS"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, pr := range prs {
-		title := truncateString(pr.Title, 50)
-		branch := truncateString(pr.Source.Branch.Name, 30)
-		author := truncateString(pr.Author.DisplayName, 20)
+		title := cmdutil.TruncateString(pr.Title, 50)
+		branch := cmdutil.TruncateString(pr.Source.Branch.Name, 30)
+		author := cmdutil.TruncateString(pr.Author.DisplayName, 20)
 		status := formatStatus(streams, string(pr.State))
 
 		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\n",
@@ -174,14 +163,4 @@ func formatStatus(streams *iostreams.IOStreams, state string) string {
 	default:
 		return state
 	}
-}
-
-func truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return s[:maxLen]
-	}
-	return s[:maxLen-3] + "..."
 }

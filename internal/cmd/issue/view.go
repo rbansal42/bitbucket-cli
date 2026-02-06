@@ -2,7 +2,6 @@ package issue
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -128,8 +127,8 @@ func outputViewJSON(streams *iostreams.IOStreams, issue *api.Issue, comments []a
 		"state":      issue.State,
 		"kind":       issue.Kind,
 		"priority":   issue.Priority,
-		"reporter":   getUserDisplayName(issue.Reporter),
-		"assignee":   getUserDisplayName(issue.Assignee),
+		"reporter":   cmdutil.GetUserDisplayName(issue.Reporter),
+		"assignee":   cmdutil.GetUserDisplayName(issue.Assignee),
 		"votes":      issue.Votes,
 		"created_on": issue.CreatedOn,
 		"updated_on": issue.UpdatedOn,
@@ -148,7 +147,7 @@ func outputViewJSON(streams *iostreams.IOStreams, issue *api.Issue, comments []a
 		for i, c := range comments {
 			commentList[i] = map[string]interface{}{
 				"id":         c.ID,
-				"user":       getUserDisplayName(c.User),
+				"user":       cmdutil.GetUserDisplayName(c.User),
 				"created_on": c.CreatedOn,
 				"updated_on": c.UpdatedOn,
 			}
@@ -159,13 +158,7 @@ func outputViewJSON(streams *iostreams.IOStreams, issue *api.Issue, comments []a
 		output["comments"] = commentList
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func displayIssue(streams *iostreams.IOStreams, issue *api.Issue, comments []api.IssueComment, showComments bool) error {
@@ -180,8 +173,8 @@ func displayIssue(streams *iostreams.IOStreams, issue *api.Issue, comments []api
 	fmt.Fprintln(streams.Out)
 
 	// Reporter and Assignee
-	fmt.Fprintf(streams.Out, "Reporter: %s\n", getUserDisplayName(issue.Reporter))
-	fmt.Fprintf(streams.Out, "Assignee: %s\n", getUserDisplayName(issue.Assignee))
+	fmt.Fprintf(streams.Out, "Reporter: %s\n", cmdutil.GetUserDisplayName(issue.Reporter))
+	fmt.Fprintf(streams.Out, "Assignee: %s\n", cmdutil.GetUserDisplayName(issue.Assignee))
 	fmt.Fprintln(streams.Out)
 
 	// Votes
@@ -198,8 +191,8 @@ func displayIssue(streams *iostreams.IOStreams, issue *api.Issue, comments []api
 	}
 
 	// Timestamps
-	fmt.Fprintf(streams.Out, "Created:  %s\n", timeAgo(issue.CreatedOn))
-	fmt.Fprintf(streams.Out, "Updated:  %s\n", timeAgo(issue.UpdatedOn))
+	fmt.Fprintf(streams.Out, "Created:  %s\n", cmdutil.TimeAgo(issue.CreatedOn))
+	fmt.Fprintf(streams.Out, "Updated:  %s\n", cmdutil.TimeAgo(issue.UpdatedOn))
 
 	// URL
 	if issue.Links != nil && issue.Links.HTML != nil {
@@ -214,8 +207,8 @@ func displayIssue(streams *iostreams.IOStreams, issue *api.Issue, comments []api
 		fmt.Fprintln(streams.Out)
 
 		for _, comment := range comments {
-			author := getUserDisplayName(comment.User)
-			timestamp := timeAgo(comment.CreatedOn)
+			author := cmdutil.GetUserDisplayName(comment.User)
+			timestamp := cmdutil.TimeAgo(comment.CreatedOn)
 
 			if streams.ColorEnabled() {
 				fmt.Fprintf(streams.Out, "%s%s%s commented %s:\n", iostreams.Bold, author, iostreams.Reset, timestamp)

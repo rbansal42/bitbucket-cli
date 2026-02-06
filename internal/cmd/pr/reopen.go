@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/rbansal42/bitbucket-cli/internal/api"
 	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
 	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
 )
@@ -62,12 +63,12 @@ func runReopen(opts *reopenOptions, args []string) error {
 	ctx := context.Background()
 
 	// First, check if PR is declined
-	pr, err := getPullRequest(ctx, client, workspace, repoSlug, prNum)
+	pr, err := client.GetPullRequest(ctx, workspace, repoSlug, int64(prNum))
 	if err != nil {
 		return fmt.Errorf("failed to get pull request: %w", err)
 	}
 
-	if pr.State != "DECLINED" {
+	if pr.State != api.PRStateDeclined {
 		return fmt.Errorf("pull request #%d is not declined (current state: %s)", prNum, pr.State)
 	}
 

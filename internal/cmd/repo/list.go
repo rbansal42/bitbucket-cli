@@ -2,10 +2,8 @@ package repo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"text/tabwriter"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -119,13 +117,7 @@ func outputListJSON(streams *iostreams.IOStreams, repos []api.RepositoryFull) er
 		}
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputTable(streams *iostreams.IOStreams, repos []api.RepositoryFull) error {
@@ -133,18 +125,14 @@ func outputTable(streams *iostreams.IOStreams, repos []api.RepositoryFull) error
 
 	// Print header
 	header := "NAME\tDESCRIPTION\tVISIBILITY\tUPDATED"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, repo := range repos {
-		name := truncateString(repo.FullName, 40)
-		desc := truncateString(repo.Description, 40)
+		name := cmdutil.TruncateString(repo.FullName, 40)
+		desc := cmdutil.TruncateString(repo.Description, 40)
 		visibility := formatVisibility(streams, repo.IsPrivate)
-		updated := formatUpdated(repo.UpdatedOn)
+		updated := cmdutil.TimeAgo(repo.UpdatedOn)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", name, desc, visibility, updated)
 	}
@@ -164,58 +152,4 @@ func formatVisibility(streams *iostreams.IOStreams, isPrivate bool) string {
 		return iostreams.Green + "public" + iostreams.Reset
 	}
 	return "public"
-}
-
-func formatUpdated(t time.Time) string {
-	if t.IsZero() {
-		return "-"
-	}
-
-	now := time.Now()
-	diff := now.Sub(t)
-
-	switch {
-	case diff < time.Minute:
-		return "just now"
-	case diff < time.Hour:
-		mins := int(diff.Minutes())
-		if mins == 1 {
-			return "1 minute ago"
-		}
-		return fmt.Sprintf("%d minutes ago", mins)
-	case diff < 24*time.Hour:
-		hours := int(diff.Hours())
-		if hours == 1 {
-			return "1 hour ago"
-		}
-		return fmt.Sprintf("%d hours ago", hours)
-	case diff < 30*24*time.Hour:
-		days := int(diff.Hours() / 24)
-		if days == 1 {
-			return "1 day ago"
-		}
-		return fmt.Sprintf("%d days ago", days)
-	case diff < 365*24*time.Hour:
-		months := int(diff.Hours() / 24 / 30)
-		if months == 1 {
-			return "1 month ago"
-		}
-		return fmt.Sprintf("%d months ago", months)
-	default:
-		years := int(diff.Hours() / 24 / 365)
-		if years == 1 {
-			return "1 year ago"
-		}
-		return fmt.Sprintf("%d years ago", years)
-	}
-}
-
-func truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return s[:maxLen]
-	}
-	return s[:maxLen-3] + "..."
 }
