@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -299,12 +298,4 @@ func capitalize(s string) string {
 		return s
 	}
 	return string(s[0]-32) + s[1:]
-}
-
-// formatTimestamp formats a time as a readable timestamp
-func formatTimestamp(t time.Time) string {
-	if t.IsZero() {
-		return "-"
-	}
-	return t.Format("Jan 2, 2006 15:04:05")
 }

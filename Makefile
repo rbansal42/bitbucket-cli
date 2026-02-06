@@ -2,7 +2,7 @@
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 BUILD_DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
-LDFLAGS := -ldflags "-X github.com/rbansal42/bb/internal/cmd.Version=$(VERSION) -X github.com/rbansal42/bb/internal/cmd.BuildDate=$(BUILD_DATE)"
+LDFLAGS := -ldflags "-X github.com/rbansal42/bitbucket-cli/internal/cmd.Version=$(VERSION) -X github.com/rbansal42/bitbucket-cli/internal/cmd.BuildDate=$(BUILD_DATE)"
 
 build:
 	go build $(LDFLAGS) -o bin/bb ./cmd/bb
