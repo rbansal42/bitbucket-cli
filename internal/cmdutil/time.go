@@ -14,6 +14,11 @@ func TimeAgo(t time.Time) string {
 
 	duration := time.Since(t)
 
+	// Guard against future timestamps (clock skew, test data)
+	if duration < 0 {
+		return "in the future"
+	}
+
 	switch {
 	case duration < time.Minute:
 		return "just now"

@@ -2,7 +2,6 @@ package issue
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -159,13 +158,7 @@ func outputViewJSON(streams *iostreams.IOStreams, issue *api.Issue, comments []a
 		output["comments"] = commentList
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func displayIssue(streams *iostreams.IOStreams, issue *api.Issue, comments []api.IssueComment, showComments bool) error {

@@ -2,7 +2,6 @@ package project
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"text/tabwriter"
 	"time"
@@ -116,13 +115,7 @@ func outputListJSON(streams *iostreams.IOStreams, projects []api.ProjectFull) er
 		}
 	}
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	fmt.Fprintln(streams.Out, string(data))
-	return nil
+	return cmdutil.PrintJSON(streams, output)
 }
 
 func outputListTable(streams *iostreams.IOStreams, projects []api.ProjectFull) error {
@@ -130,17 +123,13 @@ func outputListTable(streams *iostreams.IOStreams, projects []api.ProjectFull) e
 
 	// Print header
 	header := "KEY\tNAME\tDESCRIPTION\tVISIBILITY"
-	if streams.ColorEnabled() {
-		fmt.Fprintln(w, iostreams.Bold+header+iostreams.Reset)
-	} else {
-		fmt.Fprintln(w, header)
-	}
+	cmdutil.PrintTableHeader(streams, w, header)
 
 	// Print rows
 	for _, proj := range projects {
 		key := proj.Key
-		name := truncateString(proj.Name, 30)
-		desc := truncateString(proj.Description, 40)
+		name := cmdutil.TruncateString(proj.Name, 30)
+		desc := cmdutil.TruncateString(proj.Description, 40)
 		visibility := formatVisibility(streams, proj.IsPrivate)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", key, name, desc, visibility)
@@ -161,14 +150,4 @@ func formatVisibility(streams *iostreams.IOStreams, isPrivate bool) string {
 		return iostreams.Green + "public" + iostreams.Reset
 	}
 	return "public"
-}
-
-func truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return s[:maxLen]
-	}
-	return s[:maxLen-3] + "..."
 }
