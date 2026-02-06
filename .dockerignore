@@ -1,0 +1,8 @@
+.git
+.worktrees
+bin/
+cover.out
+*.md
+!README.md
+docs/
+.github/
