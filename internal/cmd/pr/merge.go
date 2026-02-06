@@ -136,7 +136,7 @@ func runMerge(opts *mergeOptions) error {
 	}
 
 	// Get PR details
-	pr, err := getPullRequest(ctx, client, workspace, repoSlug, opts.prNumber)
+	pr, err := client.GetPullRequest(ctx, workspace, repoSlug, int64(opts.prNumber))
 	if err != nil {
 		return fmt.Errorf("failed to get pull request: %w", err)
 	}
