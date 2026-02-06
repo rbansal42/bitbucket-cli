@@ -1,8 +1,13 @@
 .git
 .worktrees
 bin/
+dist/
 cover.out
 *.md
-!README.md
 docs/
 .github/
+Dockerfile
+.dockerignore
+.goreleaser.yml
+Makefile
+*.test

@@ -273,6 +273,7 @@ type User struct {
 	UUID        string `json:"uuid"`
 	Username    string `json:"username"`
 	DisplayName string `json:"display_name"`
+	Nickname    string `json:"nickname"`
 	AccountID   string `json:"account_id"`
 	Links       struct {
 		Avatar struct {
