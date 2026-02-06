@@ -86,7 +86,7 @@ func runCheckout(opts *checkoutOptions) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	pr, err := getPullRequest(ctx, client, workspace, repoSlug, opts.prNumber)
+	pr, err := client.GetPullRequest(ctx, workspace, repoSlug, int64(opts.prNumber))
 	if err != nil {
 		return fmt.Errorf("failed to get pull request: %w", err)
 	}

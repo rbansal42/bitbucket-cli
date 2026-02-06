@@ -62,7 +62,7 @@ func runReopen(opts *reopenOptions, args []string) error {
 	ctx := context.Background()
 
 	// First, check if PR is declined
-	pr, err := getPullRequest(ctx, client, workspace, repoSlug, prNum)
+	pr, err := client.GetPullRequest(ctx, workspace, repoSlug, int64(prNum))
 	if err != nil {
 		return fmt.Errorf("failed to get pull request: %w", err)
 	}

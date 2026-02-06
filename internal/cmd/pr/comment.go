@@ -94,7 +94,7 @@ func runComment(opts *commentOptions, args []string) error {
 	}
 
 	// Parse response to get comment ID
-	comment, err := api.ParseResponse[*PRComment](resp)
+	comment, err := api.ParseResponse[*api.PRComment](resp)
 	if err != nil {
 		// Still print success even if we can't parse the comment ID
 		opts.streams.Success("Added comment to pull request #%d", prNum)

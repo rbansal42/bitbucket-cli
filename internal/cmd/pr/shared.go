@@ -1,14 +1,12 @@
 package pr
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 
-	"github.com/rbansal42/bitbucket-cli/internal/api"
 	"github.com/rbansal42/bitbucket-cli/internal/config"
 )
 
@@ -92,96 +90,4 @@ func getEditor() string {
 
 	// Default to vi
 	return "vi"
-}
-
-// PRUser represents a user in a pull request context
-type PRUser struct {
-	UUID        string `json:"uuid"`
-	Username    string `json:"username"`
-	DisplayName string `json:"display_name"`
-	AccountID   string `json:"account_id"`
-	Nickname    string `json:"nickname"`
-	Links       struct {
-		Avatar struct {
-			Href string `json:"href"`
-		} `json:"avatar"`
-		HTML struct {
-			Href string `json:"href"`
-		} `json:"html"`
-	} `json:"links"`
-}
-
-// PRParticipant represents a participant in a pull request
-type PRParticipant struct {
-	User     PRUser `json:"user"`
-	Role     string `json:"role"`     // PARTICIPANT, REVIEWER
-	Approved bool   `json:"approved"`
-	State    string `json:"state"`    // approved, changes_requested, etc.
-}
-
-// PullRequest represents a Bitbucket pull request
-type PullRequest struct {
-	ID          int    `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	State       string `json:"state"`
-	Author      PRUser `json:"author"`
-	Source      struct {
-		Branch struct {
-			Name string `json:"name"`
-		} `json:"branch"`
-		Repository struct {
-			FullName string `json:"full_name"`
-		} `json:"repository"`
-	} `json:"source"`
-	Destination struct {
-		Branch struct {
-			Name string `json:"name"`
-		} `json:"branch"`
-		Repository struct {
-			FullName string `json:"full_name"`
-		} `json:"repository"`
-	} `json:"destination"`
-	Reviewers        []PRUser        `json:"reviewers"`
-	Participants     []PRParticipant `json:"participants"`
-	CommentCount     int             `json:"comment_count"`
-	TaskCount        int             `json:"task_count"`
-	CloseSourceBranch bool           `json:"close_source_branch"`
-	CreatedOn        string          `json:"created_on"`
-	UpdatedOn        string          `json:"updated_on"`
-	Links            struct {
-		HTML struct {
-			Href string `json:"href"`
-		} `json:"html"`
-		Diff struct {
-			Href string `json:"href"`
-		} `json:"diff"`
-		Self struct {
-			Href string `json:"href"`
-		} `json:"self"`
-	} `json:"links"`
-}
-
-// PRComment represents a pull request comment
-type PRComment struct {
-	ID      int `json:"id"`
-	Content struct {
-		Raw string `json:"raw"`
-	} `json:"content"`
-	Links struct {
-		HTML struct {
-			Href string `json:"href"`
-		} `json:"html"`
-	} `json:"links"`
-}
-
-// getPullRequest fetches a pull request by number
-func getPullRequest(ctx context.Context, client *api.Client, workspace, repoSlug string, prNum int) (*PullRequest, error) {
-	path := fmt.Sprintf("/repositories/%s/%s/pullrequests/%d", workspace, repoSlug, prNum)
-	resp, err := client.Get(ctx, path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return api.ParseResponse[*PullRequest](resp)
 }
