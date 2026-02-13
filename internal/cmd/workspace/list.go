@@ -54,6 +54,10 @@ You can filter by your role in the workspace (owner, collaborator, or member).`,
 	cmd.Flags().IntVarP(&opts.Limit, "limit", "l", 30, "Maximum number of workspaces to list")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 
+	_ = cmd.RegisterFlagCompletionFunc("role", cmdutil.StaticFlagCompletion([]string{
+		"owner", "collaborator", "member",
+	}))
+
 	return cmd
 }
 
