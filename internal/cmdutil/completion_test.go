@@ -125,6 +125,62 @@ func TestStaticFlagCompletionEmpty(t *testing.T) {
 	}
 }
 
+func TestFilterPrefixWithTabSeparatedValues(t *testing.T) {
+	values := []string{"123\tFix login bug", "456\tAdd feature", "12\tUpdate docs"}
+
+	tests := []struct {
+		name       string
+		toComplete string
+		expected   []string
+	}{
+		{
+			name:       "match by numeric prefix",
+			toComplete: "1",
+			expected:   []string{"123\tFix login bug", "12\tUpdate docs"},
+		},
+		{
+			name:       "exact number match",
+			toComplete: "123",
+			expected:   []string{"123\tFix login bug"},
+		},
+		{
+			name:       "no match on description text",
+			toComplete: "Fix",
+			expected:   nil,
+		},
+		{
+			name:       "match all with empty prefix",
+			toComplete: "",
+			expected:   values,
+		},
+		{
+			name:       "match single digit 4",
+			toComplete: "4",
+			expected:   []string{"456\tAdd feature"},
+		},
+		{
+			name:       "no match",
+			toComplete: "9",
+			expected:   nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := filterPrefix(values, tt.toComplete)
+			if len(result) != len(tt.expected) {
+				t.Errorf("expected %d results, got %d: %v", len(tt.expected), len(result), result)
+				return
+			}
+			for i, v := range tt.expected {
+				if result[i] != v {
+					t.Errorf("expected result[%d] = %q, got %q", i, v, result[i])
+				}
+			}
+		})
+	}
+}
+
 func TestCompletionCtx(t *testing.T) {
 	ctx, cancel := completionCtx()
 	defer cancel()
