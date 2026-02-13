@@ -59,6 +59,9 @@ pipeline defined in bitbucket-pipelines.yml with --custom.`,
 	cmd.Flags().StringVar(&opts.custom, "custom", "", "Custom pipeline name (for custom pipelines in bitbucket-pipelines.yml)")
 	cmd.Flags().StringVarP(&opts.repo, "repo", "R", "", "Repository in WORKSPACE/REPO format")
 
+	_ = cmd.RegisterFlagCompletionFunc("branch", cmdutil.CompleteBranchNames)
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

@@ -102,6 +102,9 @@ may not support rebase merge for all repositories).`,
 	cmd.Flags().Bool("squash", false, "Use squash merge")
 	cmd.Flags().Bool("rebase", false, "Use rebase merge (if supported)")
 
+	cmd.ValidArgsFunction = cmdutil.CompletePRNumbers
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

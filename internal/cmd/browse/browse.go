@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/rbansal42/bitbucket-cli/internal/cmdutil"
 	"github.com/rbansal42/bitbucket-cli/internal/config"
 	"github.com/rbansal42/bitbucket-cli/internal/git"
 	"github.com/rbansal42/bitbucket-cli/internal/iostreams"
@@ -17,16 +18,16 @@ import (
 // NewCmdBrowse creates the browse command
 func NewCmdBrowse(streams *iostreams.IOStreams) *cobra.Command {
 	var (
-		branch     string
-		commit     string
-		noBrowser  bool
-		repo       string
-		settings   bool
-		wiki       bool
-		issues     bool
-		prs        bool
-		pipelines  bool
-		downloads  bool
+		branch    string
+		commit    string
+		noBrowser bool
+		repo      string
+		settings  bool
+		wiki      bool
+		issues    bool
+		prs       bool
+		pipelines bool
+		downloads bool
 	)
 
 	cmd := &cobra.Command{
@@ -142,6 +143,8 @@ Use flags to open specific sections like issues, pull requests, or settings.`,
 	cmd.Flags().BoolVar(&prs, "prs", false, "Open pull requests page")
 	cmd.Flags().BoolVar(&pipelines, "pipelines", false, "Open pipelines page")
 	cmd.Flags().BoolVar(&downloads, "downloads", false, "Open downloads page")
+
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
 
 	return cmd
 }

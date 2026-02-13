@@ -57,6 +57,8 @@ Snippets are workspace-scoped and can be filtered by your role.`,
 	cmd.Flags().IntVarP(&opts.Limit, "limit", "l", 30, "Maximum number of snippets to list")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 
+	_ = cmd.RegisterFlagCompletionFunc("workspace", cmdutil.CompleteWorkspaceNames)
+
 	return cmd
 }
 

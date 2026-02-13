@@ -63,6 +63,15 @@ to enter a title interactively.`,
 	cmd.Flags().StringVarP(&opts.assignee, "assignee", "a", "", "Assignee username")
 	cmd.Flags().StringVar(&opts.repo, "repo", "", "Repository in WORKSPACE/REPO format")
 
+	_ = cmd.RegisterFlagCompletionFunc("kind", cmdutil.StaticFlagCompletion([]string{
+		"bug", "enhancement", "proposal", "task",
+	}))
+	_ = cmd.RegisterFlagCompletionFunc("priority", cmdutil.StaticFlagCompletion([]string{
+		"trivial", "minor", "major", "critical", "blocker",
+	}))
+	_ = cmd.RegisterFlagCompletionFunc("assignee", cmdutil.CompleteWorkspaceMembers)
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 
@@ -147,5 +156,3 @@ func runCreate(opts *createOptions) error {
 
 	return nil
 }
-
-
