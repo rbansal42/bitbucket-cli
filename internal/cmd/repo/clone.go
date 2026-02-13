@@ -70,7 +70,6 @@ to change this preference.`,
 	cmd.Flags().StringVarP(&opts.branch, "branch", "b", "", "Clone a specific branch")
 
 	cmd.ValidArgsFunction = cmdutil.CompleteRepoNames
-	_ = cmd.RegisterFlagCompletionFunc("branch", cmdutil.CompleteBranchNames)
 
 	return cmd
 }

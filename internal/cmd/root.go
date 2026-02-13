@@ -67,6 +67,8 @@ func Execute() error {
 func init() {
 	// Global flags
 	rootCmd.PersistentFlags().StringP("repo", "R", "", "Select a repository using the WORKSPACE/REPO format")
+	// Register completion for the persistent --repo flag. Subcommands that define
+	// their own local --repo flag will shadow this with their own registration.
 	_ = rootCmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
 
 	// Version command

@@ -66,7 +66,7 @@ by pipeline status (PENDING, IN_PROGRESS, COMPLETED, FAILED, etc.).`,
 	cmd.Flags().StringVarP(&opts.Repo, "repo", "R", "", "Repository in WORKSPACE/REPO format")
 
 	_ = cmd.RegisterFlagCompletionFunc("status", cmdutil.StaticFlagCompletion([]string{
-		"PENDING", "BUILDING", "COMPLETED", "STOPPED", "FAILED", "ERROR", "EXPIRED",
+		"PENDING", "IN_PROGRESS", "COMPLETED", "FAILED", "STOPPED", "EXPIRED", "SUCCESSFUL",
 	}))
 	_ = cmd.RegisterFlagCompletionFunc("branch", cmdutil.CompleteBranchNames)
 	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
