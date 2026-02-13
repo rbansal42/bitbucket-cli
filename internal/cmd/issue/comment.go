@@ -40,6 +40,9 @@ func NewCmdComment(streams *iostreams.IOStreams) *cobra.Command {
 	cmd.Flags().StringVarP(&opts.body, "body", "b", "", "Comment body text")
 	cmd.Flags().StringVar(&opts.repo, "repo", "", "Repository in WORKSPACE/REPO format")
 
+	cmd.ValidArgsFunction = cmdutil.CompleteIssueIDs
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

@@ -51,6 +51,9 @@ by default when stdout is a terminal, and disabled when piped.`,
 	cmd.Flags().BoolVar(&opts.noColor, "no-color", false, "Disable color output")
 	cmd.Flags().StringVarP(&opts.repo, "repo", "R", "", "Repository in WORKSPACE/REPO format")
 
+	cmd.ValidArgsFunction = cmdutil.CompletePRNumbers
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

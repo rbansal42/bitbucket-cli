@@ -59,6 +59,9 @@ content, and other metadata. Use --comments to also show comments.`,
 	cmd.Flags().BoolVar(&opts.jsonOut, "json", false, "Output in JSON format")
 	cmd.Flags().StringVar(&opts.repo, "repo", "", "Repository in WORKSPACE/REPO format")
 
+	cmd.ValidArgsFunction = cmdutil.CompleteIssueIDs
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

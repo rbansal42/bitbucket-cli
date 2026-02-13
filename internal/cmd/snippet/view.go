@@ -60,6 +60,8 @@ By default, shows snippet metadata. Use --raw to view file contents.`,
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 	cmd.Flags().BoolVar(&opts.Raw, "raw", false, "Show raw file contents")
 
+	_ = cmd.RegisterFlagCompletionFunc("workspace", cmdutil.CompleteWorkspaceNames)
+
 	return cmd
 }
 

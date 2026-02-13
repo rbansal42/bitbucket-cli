@@ -55,6 +55,8 @@ Use the --repo flag to specify a different repository.`,
 	cmd.Flags().IntVarP(&opts.Limit, "limit", "l", 30, "Maximum number of branches to list")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

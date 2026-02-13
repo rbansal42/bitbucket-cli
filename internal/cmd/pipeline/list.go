@@ -65,6 +65,8 @@ by pipeline status (PENDING, IN_PROGRESS, COMPLETED, FAILED, etc.).`,
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 	cmd.Flags().StringVarP(&opts.Repo, "repo", "R", "", "Repository in WORKSPACE/REPO format")
 
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 
