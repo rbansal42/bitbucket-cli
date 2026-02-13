@@ -55,6 +55,9 @@ At least one action flag (--approve, --request-changes, or --comment) must be sp
 	cmd.Flags().StringVarP(&opts.body, "body", "b", "", "Review comment body")
 	cmd.Flags().StringVarP(&opts.repo, "repo", "R", "", "Repository in WORKSPACE/REPO format")
 
+	cmd.ValidArgsFunction = cmdutil.CompletePRNumbers
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

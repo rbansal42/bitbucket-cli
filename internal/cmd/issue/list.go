@@ -74,6 +74,17 @@ priority, or assignee.`,
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 	cmd.Flags().StringVar(&opts.Repo, "repo", "", "Repository in WORKSPACE/REPO format")
 
+	_ = cmd.RegisterFlagCompletionFunc("state", cmdutil.StaticFlagCompletion([]string{
+		"new", "open", "resolved", "on hold", "invalid", "duplicate", "wontfix", "closed",
+	}))
+	_ = cmd.RegisterFlagCompletionFunc("kind", cmdutil.StaticFlagCompletion([]string{
+		"bug", "enhancement", "proposal", "task",
+	}))
+	_ = cmd.RegisterFlagCompletionFunc("priority", cmdutil.StaticFlagCompletion([]string{
+		"trivial", "minor", "major", "critical", "blocker",
+	}))
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

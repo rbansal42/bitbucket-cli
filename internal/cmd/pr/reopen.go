@@ -41,6 +41,9 @@ Only declined pull requests can be reopened. Merged pull requests cannot be reop
 
 	cmd.Flags().StringVarP(&opts.repo, "repo", "R", "", "Repository in WORKSPACE/REPO format")
 
+	cmd.ValidArgsFunction = cmdutil.CompletePRNumbers
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 
