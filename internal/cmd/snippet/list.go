@@ -58,6 +58,9 @@ Snippets are workspace-scoped and can be filtered by your role.`,
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 
 	_ = cmd.RegisterFlagCompletionFunc("workspace", cmdutil.CompleteWorkspaceNames)
+	_ = cmd.RegisterFlagCompletionFunc("role", cmdutil.StaticFlagCompletion([]string{
+		"owner", "contributor", "member",
+	}))
 
 	return cmd
 }
