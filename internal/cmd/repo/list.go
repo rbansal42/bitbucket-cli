@@ -66,6 +66,8 @@ By default, repositories are sorted by last updated time.`,
 	cmd.Flags().StringVarP(&opts.Sort, "sort", "s", "-updated_on", "Sort field (name, -updated_on)")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 
+	_ = cmd.RegisterFlagCompletionFunc("workspace", cmdutil.CompleteWorkspaceNames)
+
 	return cmd
 }
 

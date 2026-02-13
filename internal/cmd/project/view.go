@@ -66,6 +66,8 @@ short uppercase identifiers like "PROJ" or "DEV".`,
 	cmd.Flags().BoolVar(&opts.web, "web", false, "Open the project in a web browser")
 	cmd.Flags().BoolVar(&opts.jsonOut, "json", false, "Output in JSON format")
 
+	_ = cmd.RegisterFlagCompletionFunc("workspace", cmdutil.CompleteWorkspaceNames)
+
 	return cmd
 }
 

@@ -98,6 +98,8 @@ a public repository instead.`,
 	cmd.Flags().BoolVarP(&opts.clone, "clone", "c", false, "Clone the repository after creation")
 	cmd.Flags().StringVar(&opts.gitignore, "gitignore", "", "Initialize with gitignore template")
 
+	_ = cmd.RegisterFlagCompletionFunc("workspace", cmdutil.CompleteWorkspaceNames)
+
 	return cmd
 }
 

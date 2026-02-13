@@ -43,6 +43,9 @@ additional work is needed.`,
 
 	cmd.Flags().StringVar(&opts.repo, "repo", "", "Repository in WORKSPACE/REPO format")
 
+	cmd.ValidArgsFunction = cmdutil.CompleteIssueIDs
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

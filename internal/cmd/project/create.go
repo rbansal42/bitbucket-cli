@@ -75,6 +75,8 @@ identifier (e.g., "PROJ", "DEV", "CORE").`,
 	cmd.Flags().BoolVarP(&opts.private, "private", "p", true, "Create a private project (default: true)")
 	cmd.Flags().BoolVar(&opts.jsonOut, "json", false, "Output in JSON format")
 
+	_ = cmd.RegisterFlagCompletionFunc("workspace", cmdutil.CompleteWorkspaceNames)
+
 	return cmd
 }
 

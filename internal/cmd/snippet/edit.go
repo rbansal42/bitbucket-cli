@@ -58,6 +58,8 @@ You can update the title and/or add/update files.`,
 	cmd.Flags().StringArrayVarP(&opts.Files, "file", "f", nil, "File to update (can be repeated)")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 
+	_ = cmd.RegisterFlagCompletionFunc("workspace", cmdutil.CompleteWorkspaceNames)
+
 	return cmd
 }
 
