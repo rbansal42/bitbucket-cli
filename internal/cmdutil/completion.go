@@ -15,6 +15,13 @@ import (
 // completionTimeout is the maximum time allowed for completion API calls.
 const completionTimeout = 5 * time.Second
 
+// completionListPageSize is the page size for list-type API calls during completion.
+const completionListPageSize = 50
+
+// completionDetailPageSize is the page size for PR/issue API calls during completion.
+// Smaller because these include more data per item.
+const completionDetailPageSize = 30
+
 // StaticFlagCompletion returns a completion function compatible with
 // cobra.RegisterFlagCompletionFunc. It filters values by the toComplete
 // prefix (case-insensitive) and always returns ShellCompDirectiveNoFileComp.
@@ -91,7 +98,7 @@ func CompleteWorkspaceNames(cmd *cobra.Command, args []string, toComplete string
 	ctx, cancel := completionCtx()
 	defer cancel()
 
-	result, err := client.ListWorkspaces(ctx, &api.WorkspaceListOptions{Limit: 50})
+	result, err := client.ListWorkspaces(ctx, &api.WorkspaceListOptions{Limit: completionListPageSize})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
@@ -121,7 +128,7 @@ func CompleteRepoNames(cmd *cobra.Command, args []string, toComplete string) ([]
 	ctx, cancel := completionCtx()
 	defer cancel()
 
-	result, err := client.ListRepositories(ctx, ws, &api.RepositoryListOptions{Limit: 50})
+	result, err := client.ListRepositories(ctx, ws, &api.RepositoryListOptions{Limit: completionListPageSize})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
@@ -149,7 +156,7 @@ func CompleteBranchNames(cmd *cobra.Command, args []string, toComplete string) (
 	ctx, cancel := completionCtx()
 	defer cancel()
 
-	result, err := client.ListBranches(ctx, ws, slug, &api.BranchListOptions{Limit: 50})
+	result, err := client.ListBranches(ctx, ws, slug, &api.BranchListOptions{Limit: completionListPageSize})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
@@ -177,7 +184,7 @@ func CompletePRNumbers(cmd *cobra.Command, args []string, toComplete string) ([]
 	ctx, cancel := completionCtx()
 	defer cancel()
 
-	result, err := client.ListPullRequests(ctx, ws, slug, &api.PRListOptions{State: api.PRStateOpen, Limit: 30})
+	result, err := client.ListPullRequests(ctx, ws, slug, &api.PRListOptions{State: api.PRStateOpen, Limit: completionDetailPageSize})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
@@ -205,7 +212,7 @@ func CompleteIssueIDs(cmd *cobra.Command, args []string, toComplete string) ([]s
 	ctx, cancel := completionCtx()
 	defer cancel()
 
-	result, err := client.ListIssues(ctx, ws, slug, &api.IssueListOptions{Limit: 30})
+	result, err := client.ListIssues(ctx, ws, slug, &api.IssueListOptions{Limit: completionDetailPageSize})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
@@ -233,7 +240,7 @@ func CompleteWorkspaceMembers(cmd *cobra.Command, args []string, toComplete stri
 	ctx, cancel := completionCtx()
 	defer cancel()
 
-	result, err := client.ListWorkspaceMembers(ctx, ws, &api.WorkspaceMemberListOptions{Limit: 50})
+	result, err := client.ListWorkspaceMembers(ctx, ws, &api.WorkspaceMemberListOptions{Limit: completionListPageSize})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
@@ -242,6 +249,9 @@ func CompleteWorkspaceMembers(cmd *cobra.Command, args []string, toComplete stri
 	for _, m := range result.Values {
 		if m.User != nil {
 			name := m.User.Nickname
+			if name == "" {
+				name = m.User.Username
+			}
 			if name == "" {
 				name = m.User.DisplayName
 			}
@@ -256,6 +266,10 @@ func CompleteWorkspaceMembers(cmd *cobra.Command, args []string, toComplete stri
 
 // filterPrefix filters values by the toComplete prefix (case-insensitive).
 // For tab-separated values ("id\tdescription"), only the part before the tab is matched.
+//
+// NOTE: Cobra's completion framework also performs its own prefix filtering. This
+// function provides a safety net to reduce API response data before passing to Cobra,
+// and handles the tab-separated value format correctly. The redundancy is intentional.
 func filterPrefix(values []string, toComplete string) []string {
 	if toComplete == "" {
 		return values
