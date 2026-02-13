@@ -71,6 +71,8 @@ require a repository context.`,
 	cmd.Flags().BoolVar(&opts.View, "view", false, "Show the current default repository")
 	cmd.Flags().BoolVar(&opts.Unset, "unset", false, "Remove the default repository")
 
+	cmd.ValidArgsFunction = cmdutil.CompleteRepoNames
+
 	return cmd
 }
 

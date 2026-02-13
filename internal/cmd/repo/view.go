@@ -63,6 +63,8 @@ You can specify a repository using the workspace/repo format.`,
 	cmd.Flags().BoolVarP(&opts.web, "web", "w", false, "Open the repository in a web browser")
 	cmd.Flags().BoolVar(&opts.jsonOut, "json", false, "Output in JSON format")
 
+	cmd.ValidArgsFunction = cmdutil.CompleteRepoNames
+
 	return cmd
 }
 
