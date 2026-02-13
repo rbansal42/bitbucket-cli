@@ -74,6 +74,10 @@ priority, or assignee.`,
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 	cmd.Flags().StringVar(&opts.Repo, "repo", "", "Repository in WORKSPACE/REPO format")
 
+	// NOTE: "on hold" contains a space, which is the canonical Bitbucket API value
+	// (confirmed in the OpenAPI spec enum). Cobra handles quoting automatically for
+	// zsh, fish, and PowerShell. Bash completion may require the user to quote the
+	// value (e.g. --state "on hold" or --state 'on hold').
 	_ = cmd.RegisterFlagCompletionFunc("state", cmdutil.StaticFlagCompletion([]string{
 		"new", "open", "resolved", "on hold", "invalid", "duplicate", "wontfix", "closed",
 	}))

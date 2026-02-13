@@ -69,6 +69,8 @@ to change this preference.`,
 	cmd.Flags().IntVar(&opts.depth, "depth", 0, "Create a shallow clone with a limited number of commits")
 	cmd.Flags().StringVarP(&opts.branch, "branch", "b", "", "Clone a specific branch")
 
+	cmd.ValidArgsFunction = cmdutil.CompleteRepoNames
+
 	return cmd
 }
 
@@ -208,5 +210,3 @@ func extractRepoNameFromURL(url string) string {
 	}
 	return ""
 }
-
-
