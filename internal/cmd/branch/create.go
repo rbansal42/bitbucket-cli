@@ -59,6 +59,9 @@ By default, this command detects the repository from your git remote.`,
 
 	cmd.MarkFlagRequired("target")
 
+	_ = cmd.RegisterFlagCompletionFunc("target", cmdutil.CompleteBranchNames)
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

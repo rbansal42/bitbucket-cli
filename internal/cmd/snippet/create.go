@@ -59,6 +59,8 @@ If no files are specified, reads from stdin.`,
 
 	cmd.MarkFlagRequired("title")
 
+	_ = cmd.RegisterFlagCompletionFunc("workspace", cmdutil.CompleteWorkspaceNames)
+
 	return cmd
 }
 

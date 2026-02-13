@@ -82,6 +82,9 @@ You can specify a pull request by number, URL, or branch name.`,
 	cmd.Flags().BoolVar(&opts.jsonOut, "json", false, "Output in JSON format")
 	cmd.Flags().StringVarP(&opts.repo, "repo", "R", "", "Select a repository using the WORKSPACE/REPO format")
 
+	cmd.ValidArgsFunction = cmdutil.CompletePRNumbers
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

@@ -64,6 +64,9 @@ use --force to overwrite it.`,
 	cmd.Flags().BoolVarP(&opts.force, "force", "f", false, "Overwrite existing local branch")
 	cmd.Flags().StringVarP(&opts.repo, "repo", "R", "", "Repository in WORKSPACE/REPO format")
 
+	cmd.ValidArgsFunction = cmdutil.CompletePRNumbers
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

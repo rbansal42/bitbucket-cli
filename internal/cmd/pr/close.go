@@ -46,6 +46,9 @@ Optionally, you can add a comment explaining why the PR is being closed.`,
 	cmd.Flags().StringVarP(&opts.comment, "comment", "c", "", "Add a closing comment")
 	cmd.Flags().StringVarP(&opts.repo, "repo", "R", "", "Repository in WORKSPACE/REPO format")
 
+	cmd.ValidArgsFunction = cmdutil.CompletePRNumbers
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

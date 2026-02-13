@@ -67,6 +67,10 @@ At least one of --title, --body, or --base must be specified.`,
 	cmd.Flags().StringVar(&opts.base, "base", "", "New destination branch")
 	cmd.Flags().BoolVar(&opts.jsonOut, "json", false, "Output in JSON format")
 
+	cmd.ValidArgsFunction = cmdutil.CompletePRNumbers
+	_ = cmd.RegisterFlagCompletionFunc("base", cmdutil.CompleteBranchNames)
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 
