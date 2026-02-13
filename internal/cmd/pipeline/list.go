@@ -35,7 +35,7 @@ func NewCmdList(streams *iostreams.IOStreams) *cobra.Command {
 		Long: `List pipelines in a Bitbucket repository.
 
 By default, this shows the most recent pipelines. Use the --status flag to filter
-by pipeline status (PENDING, IN_PROGRESS, COMPLETED, FAILED, etc.).`,
+by pipeline status (PENDING, IN_PROGRESS, COMPLETED, SUCCESSFUL, FAILED, STOPPED, EXPIRED).`,
 		Example: `  # List recent pipelines
   bb pipeline list
 
