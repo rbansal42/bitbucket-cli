@@ -66,6 +66,7 @@ by state (OPEN, MERGED, DECLINED).`,
 	cmd.Flags().StringVarP(&opts.Repo, "repo", "R", "", "Repository in WORKSPACE/REPO format")
 
 	_ = cmd.RegisterFlagCompletionFunc("state", cmdutil.StaticFlagCompletion([]string{"OPEN", "MERGED", "DECLINED"}))
+	_ = cmd.RegisterFlagCompletionFunc("author", cmdutil.CompleteWorkspaceMembers)
 	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
 
 	return cmd
