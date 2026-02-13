@@ -83,6 +83,7 @@ priority, or assignee.`,
 	_ = cmd.RegisterFlagCompletionFunc("priority", cmdutil.StaticFlagCompletion([]string{
 		"trivial", "minor", "major", "critical", "blocker",
 	}))
+	_ = cmd.RegisterFlagCompletionFunc("assignee", cmdutil.CompleteWorkspaceMembers)
 	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
 
 	return cmd
