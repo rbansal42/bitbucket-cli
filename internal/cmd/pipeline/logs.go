@@ -55,6 +55,8 @@ Step numbers can be obtained from 'bb pipeline steps'.`,
 	cmd.Flags().StringVarP(&opts.Step, "step", "s", "", "Step UUID or step number (default: first failed step or last step)")
 	cmd.Flags().StringVarP(&opts.Repo, "repo", "R", "", "Repository in WORKSPACE/REPO format")
 
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

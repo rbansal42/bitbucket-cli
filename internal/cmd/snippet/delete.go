@@ -54,6 +54,8 @@ Use --force to skip the confirmation prompt.`,
 	cmd.Flags().BoolVarP(&opts.Force, "force", "f", false, "Skip confirmation prompt")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Output in JSON format")
 
+	_ = cmd.RegisterFlagCompletionFunc("workspace", cmdutil.CompleteWorkspaceNames)
+
 	return cmd
 }
 

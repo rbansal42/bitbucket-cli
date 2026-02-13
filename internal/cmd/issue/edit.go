@@ -87,6 +87,16 @@ Use an empty string for --assignee to clear the assignee.`,
 	cmd.Flags().StringVarP(&opts.assignee, "assignee", "a", "", "New assignee username (use \"\" to clear)")
 	cmd.Flags().StringVar(&opts.repo, "repo", "", "Repository in WORKSPACE/REPO format")
 
+	cmd.ValidArgsFunction = cmdutil.CompleteIssueIDs
+	_ = cmd.RegisterFlagCompletionFunc("kind", cmdutil.StaticFlagCompletion([]string{
+		"bug", "enhancement", "proposal", "task",
+	}))
+	_ = cmd.RegisterFlagCompletionFunc("priority", cmdutil.StaticFlagCompletion([]string{
+		"trivial", "minor", "major", "critical", "blocker",
+	}))
+	_ = cmd.RegisterFlagCompletionFunc("assignee", cmdutil.CompleteWorkspaceMembers)
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

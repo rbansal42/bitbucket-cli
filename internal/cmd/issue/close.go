@@ -47,6 +47,9 @@ Optionally, you can add a comment explaining why the issue is being closed.`,
 	cmd.Flags().StringVarP(&opts.comment, "comment", "c", "", "Add a closing comment")
 	cmd.Flags().StringVar(&opts.repo, "repo", "", "Repository in WORKSPACE/REPO format")
 
+	cmd.ValidArgsFunction = cmdutil.CompleteIssueIDs
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

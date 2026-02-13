@@ -54,6 +54,9 @@ By default, this command detects the repository from your git remote.`,
 	cmd.Flags().StringVarP(&opts.Repo, "repo", "R", "", "Repository in WORKSPACE/REPO format (detects from git remote if not specified)")
 	cmd.Flags().BoolVarP(&opts.Force, "force", "f", false, "Skip confirmation prompt")
 
+	cmd.ValidArgsFunction = cmdutil.CompleteBranchNames
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

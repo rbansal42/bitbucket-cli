@@ -83,6 +83,11 @@ If --body is not provided, an editor will open for you to write the description.
 	cmd.Flags().BoolVar(&opts.noMaintainerEdit, "no-maintainer-edit", false, "Disable maintainer edits (not supported by Bitbucket)")
 	cmd.Flags().StringVarP(&opts.repo, "repo", "R", "", "Repository in WORKSPACE/REPO format")
 
+	_ = cmd.RegisterFlagCompletionFunc("base", cmdutil.CompleteBranchNames)
+	_ = cmd.RegisterFlagCompletionFunc("head", cmdutil.CompleteBranchNames)
+	_ = cmd.RegisterFlagCompletionFunc("reviewer", cmdutil.CompleteWorkspaceMembers)
+	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+
 	return cmd
 }
 

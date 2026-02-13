@@ -75,6 +75,8 @@ as a new remote (default name: "fork").`,
 	cmd.Flags().BoolVarP(&opts.clone, "clone", "c", false, "Clone the fork after creation")
 	cmd.Flags().StringVar(&opts.remoteName, "remote-name", "fork", "Name for the new remote when in an existing clone")
 
+	_ = cmd.RegisterFlagCompletionFunc("workspace", cmdutil.CompleteWorkspaceNames)
+
 	return cmd
 }
 
