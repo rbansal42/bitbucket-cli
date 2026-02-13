@@ -145,6 +145,7 @@ Use flags to open specific sections like issues, pull requests, or settings.`,
 	cmd.Flags().BoolVar(&downloads, "downloads", false, "Open downloads page")
 
 	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
+	_ = cmd.RegisterFlagCompletionFunc("branch", cmdutil.CompleteBranchNames)
 
 	return cmd
 }

@@ -49,6 +49,8 @@ unless the --yes flag is provided.`,
 
 	cmd.Flags().BoolVarP(&opts.yes, "yes", "y", false, "Skip confirmation prompt")
 
+	cmd.ValidArgsFunction = cmdutil.CompleteRepoNames
+
 	return cmd
 }
 

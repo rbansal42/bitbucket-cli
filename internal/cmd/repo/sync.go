@@ -57,6 +57,8 @@ By default, the main branch is synced. Use --branch to specify a different branc
 	cmd.Flags().StringVarP(&opts.branch, "branch", "b", "", "Branch to sync (default: main branch)")
 	cmd.Flags().BoolVarP(&opts.force, "force", "f", false, "Force update (reset to upstream, discarding local changes)")
 
+	_ = cmd.RegisterFlagCompletionFunc("branch", cmdutil.CompleteBranchNames)
+
 	return cmd
 }
 
