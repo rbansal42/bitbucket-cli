@@ -1172,3 +1172,141 @@ func TestGetPullRequestStatuses(t *testing.T) {
 		t.Errorf("expected second status state 'INPROGRESS', got %q", statuses.Values[1].State)
 	}
 }
+
+func TestListAllPRComments(t *testing.T) {
+	var calls int
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.URL.Path, "/comments") {
+			http.Error(w, "wrong endpoint", http.StatusBadRequest)
+			return
+		}
+
+		calls++
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		// Second page: no "next", one more comment.
+		if r.URL.Query().Get("page") == "2" {
+			w.Write([]byte(`{
+				"size": 3, "page": 2, "pagelen": 2,
+				"values": [
+					{"id": 3, "content": {"raw": "Third"}, "user": {"display_name": "C3"}, "created_on": "2024-01-03T00:00:00Z"}
+				]
+			}`))
+			return
+		}
+
+		// First page: an absolute "next" URL pointing back at this server.
+		next := "http://" + r.Host + r.URL.Path + "?page=2"
+		w.Write([]byte(`{
+			"size": 3, "page": 1, "pagelen": 2,
+			"next": "` + next + `",
+			"values": [
+				{"id": 1, "content": {"raw": "First"}, "user": {"display_name": "C1"}, "created_on": "2024-01-01T00:00:00Z"},
+				{"id": 2, "content": {"raw": "Second"}, "user": {"display_name": "C2"}, "created_on": "2024-01-02T00:00:00Z"}
+			]
+		}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(WithBaseURL(server.URL))
+
+	comments, err := client.ListAllPRComments(context.Background(), "workspace", "repo", 800)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if calls != 2 {
+		t.Errorf("expected 2 page requests (pagination followed), got %d", calls)
+	}
+	if len(comments) != 3 {
+		t.Fatalf("expected 3 comments across pages, got %d", len(comments))
+	}
+	if comments[0].ID != 1 || comments[2].ID != 3 {
+		t.Errorf("expected comments in order 1..3, got %d..%d", comments[0].ID, comments[2].ID)
+	}
+}
+
+func TestGetPRComment(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.URL.Path, "/comments/456") {
+			http.Error(w, "wrong endpoint", http.StatusBadRequest)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{
+			"id": 456,
+			"content": {"raw": "A comment"},
+			"user": {"display_name": "Author"},
+			"created_on": "2024-01-01T00:00:00Z"
+		}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(WithBaseURL(server.URL), WithToken("test-token"))
+
+	comment, err := client.GetPRComment(context.Background(), "workspace", "repo", 800, 456)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if comment.ID != 456 {
+		t.Errorf("expected comment ID 456, got %d", comment.ID)
+	}
+	if comment.Content.Raw != "A comment" {
+		t.Errorf("expected content 'A comment', got %q", comment.Content.Raw)
+	}
+}
+
+func TestReplyToPRComment(t *testing.T) {
+	var receivedBody []byte
+	var receivedPath string
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedPath = r.URL.Path
+		receivedBody, _ = io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(`{
+			"id": 101,
+			"content": {"raw": "A reply"},
+			"user": {"display_name": "Me"},
+			"parent": {"id": 456},
+			"created_on": "2024-01-01T00:00:00Z"
+		}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(WithBaseURL(server.URL), WithToken("test-token"))
+
+	comment, err := client.ReplyToPRComment(context.Background(), "workspace", "repo", 900, 456, "A reply")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// The reply must be POSTed with a parent id set.
+	var body map[string]interface{}
+	if err := json.Unmarshal(receivedBody, &body); err != nil {
+		t.Fatalf("failed to parse body: %v", err)
+	}
+	parent, ok := body["parent"].(map[string]interface{})
+	if !ok {
+		t.Fatal("expected parent object in reply body")
+	}
+	if int64(parent["id"].(float64)) != 456 {
+		t.Errorf("expected parent id 456, got %v", parent["id"])
+	}
+	content, _ := body["content"].(map[string]interface{})
+	if content["raw"] != "A reply" {
+		t.Errorf("expected raw content 'A reply', got %v", content["raw"])
+	}
+	if !strings.HasSuffix(receivedPath, "/pullrequests/900/comments") {
+		t.Errorf("unexpected request path: %s", receivedPath)
+	}
+	if comment.ID != 101 {
+		t.Errorf("expected reply ID 101, got %d", comment.ID)
+	}
+}
