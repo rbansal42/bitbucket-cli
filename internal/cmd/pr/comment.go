@@ -50,6 +50,10 @@ for you to enter the comment text.`,
 	cmd.ValidArgsFunction = cmdutil.CompletePRNumbers
 	_ = cmd.RegisterFlagCompletionFunc("repo", cmdutil.CompleteRepoNames)
 
+	// Subcommands for viewing and replying to comments.
+	cmd.AddCommand(newCmdCommentList(streams))
+	cmd.AddCommand(newCmdCommentReply(streams))
+
 	return cmd
 }
 

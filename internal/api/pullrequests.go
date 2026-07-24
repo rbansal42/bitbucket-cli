@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -417,6 +418,71 @@ func (c *Client) AddPRComment(ctx context.Context, workspace, repoSlug string, p
 	}
 
 	return ParseResponse[*PRComment](resp)
+}
+
+// ListAllPRComments lists every comment on a pull request, following pagination
+// until all pages have been fetched. Unlike ListPRComments, which returns only
+// the first page, this returns the complete set of comments (including replies).
+func (c *Client) ListAllPRComments(ctx context.Context, workspace, repoSlug string, prID int64) ([]PRComment, error) {
+	path := fmt.Sprintf("/repositories/%s/%s/pullrequests/%d/comments", workspace, repoSlug, prID)
+
+	query := url.Values{}
+	query.Set("pagelen", "50")
+
+	resp, err := c.Get(ctx, path, query)
+	if err != nil {
+		return nil, err
+	}
+
+	page, err := ParseResponse[*Paginated[PRComment]](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	all := append([]PRComment(nil), page.Values...)
+
+	// Follow the "next" links. Bitbucket returns absolute URLs, so strip the
+	// base URL to reuse the client (which prepends it in Do).
+	next := page.Next
+	for next != "" {
+		nextPath := strings.TrimPrefix(next, c.baseURL)
+
+		resp, err := c.Get(ctx, nextPath, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		page, err = ParseResponse[*Paginated[PRComment]](resp)
+		if err != nil {
+			return nil, err
+		}
+
+		all = append(all, page.Values...)
+		next = page.Next
+	}
+
+	return all, nil
+}
+
+// GetPRComment fetches a single comment on a pull request by its ID.
+func (c *Client) GetPRComment(ctx context.Context, workspace, repoSlug string, prID, commentID int64) (*PRComment, error) {
+	path := fmt.Sprintf("/repositories/%s/%s/pullrequests/%d/comments/%d", workspace, repoSlug, prID, commentID)
+
+	resp, err := c.Get(ctx, path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseResponse[*PRComment](resp)
+}
+
+// ReplyToPRComment posts a threaded reply to an existing pull request comment,
+// setting the parent to the comment being replied to.
+func (c *Client) ReplyToPRComment(ctx context.Context, workspace, repoSlug string, prID, parentID int64, content string) (*PRComment, error) {
+	return c.AddPRComment(ctx, workspace, repoSlug, prID, &AddPRCommentOptions{
+		Content:  content,
+		ParentID: parentID,
+	})
 }
 
 // UpdatePullRequest updates an existing pull request
