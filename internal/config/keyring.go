@@ -33,6 +33,12 @@ func SetToken(host, user, token string) error {
 
 // GetToken retrieves a token from the system keyring
 func GetToken(host, user string) (string, error) {
+	// Headless Linux has no Secret Service keyring.
+	for _, env := range []string{"BB_TOKEN", "BITBUCKET_TOKEN"} {
+		if token := os.Getenv(env); token != "" {
+			return token, nil
+		}
+	}
 	key := keyringKey(host, user)
 	token, err := keyring.Get(ServiceName, key)
 	if err != nil {
